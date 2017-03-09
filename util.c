@@ -216,9 +216,9 @@ copy_fd(int fd_in, int fd_out)
 	int n;
 	char buf[READ_BUFFER_SIZE];
 	while ((n = gzread(gz_in, buf, sizeof(buf))) > 0) {
-		ssize_t written = 0;
+		int written = 0;
 		do {
-			ssize_t count = write(fd_out, buf + written, n - written);
+			int count = write(fd_out, buf + written, (unsigned)(n - written));
 			if (count == -1) {
 				if (errno != EAGAIN && errno != EINTR) {
 					fatal("Failed to copy fd");
@@ -322,7 +322,7 @@ copy_file(const char *src, const char *dest, int compress_level)
 		} else {
 			written = 0;
 			do {
-				ssize_t count = write(fd_out, buf + written, n - written);
+				int count = write(fd_out, buf + written, n - written);
 				if (count == -1 && errno != EINTR) {
 					saved_errno = errno;
 					break;
@@ -1588,7 +1588,10 @@ read_file(const char *path, size_t size_hint, char **data, size_t *size)
 			allocated *= 2;
 			*data = x_realloc(*data, allocated);
 		}
-		ret = read(fd, *data + pos, allocated - pos);
+		int block = (allocated - pos) > (1024*1024*1024)
+		            ? (1024*1024*1024)
+								: (int)(allocated - pos);
+		ret = read(fd, *data + pos, block);
 		if (ret == 0 || (ret == -1 && errno != EINTR)) {
 			break;
 		}
