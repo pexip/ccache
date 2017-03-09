@@ -1548,7 +1548,7 @@ hash_compiler(struct mdfour *hash, struct stat *st, const char *path,
 	} else if (str_eq(conf->compiler_check, "mtime")) {
 		hash_delimiter(hash, "cc_mtime");
 		hash_int(hash, st->st_size);
-		hash_int(hash, st->st_mtime);
+		hash_int(hash, (int)st->st_mtime);
 	} else if (str_startswith(conf->compiler_check, "string:")) {
 		hash_delimiter(hash, "cc_hash");
 		hash_string(hash, conf->compiler_check + strlen("string:"));
