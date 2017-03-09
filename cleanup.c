@@ -195,7 +195,7 @@ cleanup_dir(struct conf *conf, const char *dir)
 		stats_add_cleanup(dir, 1);
 	}
 
-	stats_set_sizes(dir, files_in_cache, cache_size);
+	stats_set_sizes(dir, (unsigned)files_in_cache, cache_size);
 
 	// Free it up.
 	for (unsigned i = 0; i < num_files; i++) {
