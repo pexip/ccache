@@ -66,8 +66,8 @@ args_init_from_gcc_atfile(const char *filename)
 	while (1) {
 		switch (*pos) {
 		case '\\':
-			pos++;
-			if (*pos == '\0') {
+			if (pos[1] == '\0') {
+				pos++;
 				continue;
 			}
 			break;
