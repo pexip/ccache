@@ -63,14 +63,14 @@ TEST(args_init_from_gcc_atfile)
 #ifdef _WIN32
 	  // On windows, we need to keep any \ that are directory delimiter.
 	  // So use quotes to put space in arguments.
-	  "first\r'sec\tond'\tthi\\rd\nfourth  \t\"fif th\" \"si'x\\\" th\""
-	  " 'seve\nth'\\"
+	  "first\r'sec\tond'\tthi\\rd\nfourth  \t\"fif th\" \"si'x th\""
+	  " 'seve\nth'";
 #else
 	  "first\rsec\\\tond\tthi\\\\rd\nfourth  \tfif\\ th \"si'x\\\" th\""
 	  " 'seve\nth'\\";
 #endif
 
-	  create_file("gcc_atfile", argtext);
+	create_file("gcc_atfile", argtext);
 
 	args = args_init_from_gcc_atfile("gcc_atfile");
 	CHECK(args);
@@ -80,10 +80,11 @@ TEST(args_init_from_gcc_atfile)
 	CHECK_STR_EQ("thi\\rd", args->argv[2]);
 	CHECK_STR_EQ("fourth", args->argv[3]);
 	CHECK_STR_EQ("fif th", args->argv[4]);
-	CHECK_STR_EQ("si'x\" th", args->argv[5]);
 #ifndef _WIN32
+	CHECK_STR_EQ("si'x\" th", args->argv[5]);
 	CHECK_STR_EQ("seve\nth", args->argv[6]);
 #else
+	CHECK_STR_EQ("si'x th", args->argv[5]);
 	CHECK_STR_EQ("seve\r\nth", args->argv[6]);
 #endif
 	CHECK(!args->argv[7]);
