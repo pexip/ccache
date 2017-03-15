@@ -270,7 +270,8 @@ hash_command_output(struct mdfour *hash, const char *command,
 		close(pipefd[1]);
 		bool ok = hash_fd(hash, pipefd[0]);
 		if (!ok) {
-			cc_log("Error hashing compiler check command output: %s", strerror(errno));
+			cc_log("Error hashing compiler check command output: %s",
+			       strerror(errno));
 			stats_update(STATS_COMPCHECK);
 		}
 		close(pipefd[0]);

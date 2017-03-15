@@ -810,14 +810,14 @@ traverse(const char *dir, void (*fn)(const char *, struct stat *))
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA data;
-	#define FNAME data.cFileName
 
 	HANDLE h = FindFirstFile(dir, &data);
 	if (h == INVALID_HANDLE_VALUE) {
 		return;
 	}
 
-	do {
+	#define FNAME data.cFileName
+	#define NEXT  FindNextFile(h, &data)
 #else
 	DIR *d = opendir(dir);
 	if (!d) {
@@ -826,8 +826,11 @@ traverse(const char *dir, void (*fn)(const char *, struct stat *))
 
 	struct dirent *de;
 	#define  FNAME   de->d_name
-	while ((de = readdir(d))) {
+	#define  NEXT    (de = readdir(d))
+	NEXT
 #endif
+
+	do {
 		if (str_eq(FNAME, ".")) {
 			continue;
 		}
@@ -855,11 +858,11 @@ traverse(const char *dir, void (*fn)(const char *, struct stat *))
 
 		fn(fname, &st);
 		free(fname);
+	} while (NEXT());
+
 #ifdef _WIN32
-	} while (FindNextFile(h, &data));
 	FindClose(h);
 #else
-	}
 	closedir(d);
 #endif
 }
@@ -1487,8 +1490,13 @@ x_rename(const char *oldpath, const char *newpath)
 		_snprintf((LPTSTR) lp_display_buf,
 		          LocalSize(lp_display_buf) / sizeof(TCHAR),
 		          TEXT(
+		            << << <<< HEAD
 		            "%s failed with error %d: %s"), __FILE__, dw,
-		          (char *)lp_msg_buf);
+		          == == == =
+		            "%s failed with error %d: %s"), __FILE__, dw,
+		>> >> >>> 8c0f5bb ... Added uncrustify pre-hook,
+		and fixed crap added in previous commits
+		  (char *) lp_msg_buf);
 
 		cc_log("can't rename file %s to %s OS returned error: %s",
 		       oldpath, newpath, (char *) lp_display_buf);
