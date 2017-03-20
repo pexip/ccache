@@ -117,18 +117,19 @@ before_build:
   # ==== MinGW gcc compiler
   - if "%COMPILER%-%PLATFORM%" EQU "gcc-x64" set PATH=C:\msys64\mingw64\bin;%PATH%
   - if "%COMPILER%-%PLATFORM%" EQU "gcc-x64" (
-      set CC=gcc&
+      set CC=gcc -m64&
       echo "Using gcc 64 bits."
     )
   - if "%COMPILER%-%PLATFORM%" EQU "gcc-x86" set PATH=C:\msys64\mingw32\bin;%PATH%
   - if "%COMPILER%-%PLATFORM%" EQU "gcc-x86" (
-      set CC=gcc&
+      set CC=gcc -m32&
       echo "Using gcc 32 bits."
     )
 
   # ==== Misc.
   - set LC_ALL=C
-  - set RUN_FROM_BUILD_FARM=1
+  # Disable dev mode, and enable verbose test logs:
+  - set RUN_FROM_BUILD_FARM=yes
   - where %CC%
 
 build_script:
