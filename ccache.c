@@ -2854,7 +2854,11 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// Other options.
-		if (argv[i][0] == '-' || (compiler_is_msvc(args) && argv[i][0] == '/')) {
+		if (argv[i][0] == '-'
+#ifdef _WIN32
+		    || (compiler_is_msvc(args) && argv[i][0] == '/')
+#endif
+		    ) {
 			if (compopt_affects_cpp(argv[i])
 			    || compopt_prefix_affects_cpp(argv[i])) {
 				args_add(cpp_args, argv[i]);
