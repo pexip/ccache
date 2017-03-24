@@ -1284,9 +1284,6 @@ get_home_directory(void)
 char *
 get_cwd(void)
 {
-	struct stat st_pwd;
-	struct stat st_cwd;
-
 	char *cwd = gnu_getcwd();
 	if (!cwd) {
 		return NULL;
@@ -1295,6 +1292,34 @@ get_cwd(void)
 	if (!pwd) {
 		return cwd;
 	}
+#ifdef _WIN32
+	// Windows version: inode (st_ino) is always zero...
+	BY_HANDLE_FILE_INFORMATION info_pwd;
+	HANDLE hPwd = CreateFile(
+	  pwd, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+	  FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hPwd == INVALID_HANDLE_VALUE ||
+	    GetFileInformationByHandle(hPwd, &info_pwd) == 0) {
+		return cwd;
+	}
+	CloseHandle(hPwd);
+
+	BY_HANDLE_FILE_INFORMATION info_cwd;
+	HANDLE hCwd = CreateFile(
+	  cwd, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+	  FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hCwd == INVALID_HANDLE_VALUE ||
+	    GetFileInformationByHandle(hCwd, &info_cwd) == 0) {
+		return cwd;
+	}
+	CloseHandle(hCwd);
+
+	if (info_pwd.nFileIndexHigh == info_cwd.nFileIndexHigh &&
+	    info_pwd.nFileIndexLow == info_cwd.nFileIndexLow)
+#else
+	struct stat st_pwd;
+	struct stat st_cwd;
+
 	if (stat(pwd, &st_pwd) != 0) {
 		return cwd;
 	}
