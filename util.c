@@ -1301,7 +1301,15 @@ get_cwd(void)
 	if (stat(cwd, &st_cwd) != 0) {
 		return cwd;
 	}
-	if (st_pwd.st_dev == st_cwd.st_dev && st_pwd.st_ino == st_cwd.st_ino) {
+	if (st_pwd.st_dev == st_cwd.st_dev
+	    && st_pwd.st_ino == st_cwd.st_ino
+#ifdef _WIN32
+	    // Windows kludge: inode is always zero, so guess from something else...
+	    && st_pwd.st_size == st_cwd.st_size
+	    && st_pwd.st_atime == st_cwd.st_atime
+	    && st_pwd.st_ctime == st_cwd.st_atime
+#endif
+	    ) {
 		free(cwd);
 		return x_strdup(pwd);
 	} else {
@@ -1578,13 +1586,8 @@ x_rename(const char *oldpath, const char *newpath)
 		_snprintf((LPTSTR) lp_display_buf,
 		          LocalSize(lp_display_buf) / sizeof(TCHAR),
 		          TEXT(
-		            << << <<< HEAD
 		            "%s failed with error %d: %s"), __FILE__, dw,
-		          == == == =
-		            "%s failed with error %d: %s"), __FILE__, dw,
-		>> >> >>> 8c0f5bb ... Added uncrustify pre-hook,
-		and fixed crap added in previous commits
-		  (char *) lp_msg_buf);
+		          (char *)lp_msg_buf);
 
 		cc_log("can't rename file %s to %s OS returned error: %s",
 		       oldpath, newpath, (char *) lp_display_buf);
