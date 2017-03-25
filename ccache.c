@@ -289,8 +289,7 @@ add_prefix(struct args *args, char *prefix_command)
 	struct args *prefix = args_init(0, NULL);
 	char *e = x_strdup(prefix_command);
 	char *saveptr = NULL;
-	for (char *tok = strtok_r(e, " ", &saveptr);
-	     tok;
+	for (char *tok = strtok_r(e, " ", &saveptr); tok;
 	     tok = strtok_r(NULL, " ", &saveptr)) {
 		char *p;
 
@@ -1197,7 +1196,12 @@ to_cache(struct args *args)
 	cc_log("Running real compiler");
 	int status =
 	  execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
-	args_pop(args, 3);
+
+	if (compiler_is_msvc(args)) {
+		args_pop(args, 3);  // -Foooutput.obj input.c
+	} else {
+		args_pop(args, 3);  //	-o output.o input.c
+	}
 
 	struct stat st;
 	if (x_stat(tmp_stdout, &st) != 0) {
