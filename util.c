@@ -1336,15 +1336,10 @@ get_cwd(void)
 	if (stat(cwd, &st_cwd) != 0) {
 		return cwd;
 	}
-	if (st_pwd.st_dev == st_cwd.st_dev
-	    && st_pwd.st_ino == st_cwd.st_ino
-#ifdef _WIN32
-	    // Windows kludge: inode is always zero, so guess from something else...
-	    && st_pwd.st_size == st_cwd.st_size
-	    && st_pwd.st_atime == st_cwd.st_atime
-	    && st_pwd.st_ctime == st_cwd.st_atime
+	if (st_pwd.st_dev == st_cwd.st_dev &&
+	    st_pwd.st_ino == st_cwd.st_ino)
 #endif
-	    ) {
+	{
 		free(cwd);
 		return x_strdup(pwd);
 	} else {
