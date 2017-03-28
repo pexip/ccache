@@ -182,7 +182,10 @@ static bool generating_coverage;
 static bool generating_stackusage;
 
 // Relocating debuginfo in the format old=new.
-static char *debug_prefix_map = NULL;
+static char **debug_prefix_maps = NULL;
+
+// Size of debug_prefix_maps list.
+static size_t debug_prefix_maps_len = 0;
 
 // Is the compiler being asked to output coverage data (.gcda) at runtime?
 static bool profile_arcs;
@@ -268,6 +271,15 @@ compiler_is_msvc(struct args *args)
 {
 	char *name = basename(args->argv[0]);
 	bool result = path_eq(name, "cl") || path_eq(name, "cl.exe");
+	free(name);
+	return result;
+}
+
+static bool
+compiler_is_pump(struct args *args)
+{
+	char *name = basename(args->argv[0]);
+	bool result = str_eq(name, "pump") || str_eq(name, "distcc-pump");
 	free(name);
 	return result;
 }
@@ -755,7 +767,7 @@ make_relative_path(char *path)
 // - Stores the paths and hashes of included files in the global variable
 //   included_files.
 static bool
-process_preprocessed_file(struct mdfour *hash, const char *path)
+process_preprocessed_file(struct mdfour *hash, const char *path, bool pump)
 {
 	char *data;
 	size_t size;
@@ -919,6 +931,19 @@ process_preprocessed_file(struct mdfour *hash, const char *path)
 			cc_log("Found unsupported .inc" "bin directive in source code %s", path);
 			stats_update(STATS_UNSUPPORTED_DIRECTIVE);
 			failed();
+		} else if (pump && strncmp(q, "_________", 9) == 0) {
+			// Unfortunately the distcc-pump wrapper outputs standard output lines:
+			// __________Using distcc-pump from /usr/bin
+			// __________Using # distcc servers in pump mode
+			// __________Shutting down distcc-pump include server
+			while (q < end && *q != '\n') {
+				q++;
+			}
+			if (*q == '\n') {
+				q++;
+			}
+			p = q;
+			continue;
 		} else {
 			q++;
 		}
@@ -1280,7 +1305,9 @@ to_cache(struct args *args)
 		st.st_size = 0;
 	}
 
-	if (st.st_size > 0) {
+	// distcc-pump outputs lines like this:
+	// __________Using # distcc servers in pump mode
+	if (st.st_size != 0 && !compiler_is_pump(args)) {
 		cc_log("Compiler produced stdout");
 		stats_update(STATS_STDOUT);
 		tmp_unlink(tmp_stdout);
@@ -1580,7 +1607,7 @@ get_object_name_from_cpp(struct args *args, struct mdfour *hash)
 		}
 	} else {
 		hash_delimiter(hash, "cpp");
-		if (!process_preprocessed_file(hash, path_stdout)) {
+		if (!process_preprocessed_file(hash, path_stdout, compiler_is_pump(args))) {
 			stats_update(STATS_ERROR);
 			failed();
 		}
@@ -1706,8 +1733,8 @@ calculate_common_hash(struct args *args, struct mdfour *hash)
 	// Possibly hash the current working directory.
 	if (generating_debuginfo && conf->hash_dir) {
 		char *cwd = gnu_getcwd();
-		if (debug_prefix_map) {
-			char *map = debug_prefix_map;
+		for (size_t i = 0; i < debug_prefix_maps_len; i++) {
+			char *map = debug_prefix_maps[i];
 			char *sep = strchr(map, '=');
 			if (sep) {
 				char *old = x_strndup(map, sep - map);
@@ -2028,12 +2055,6 @@ from_cache(enum fromcache_call_mode mode, bool put_object_in_manifest)
 		return;
 	}
 
-	// Check if the diagnostic file is there.
-	if (output_dia && stat(cached_dia, &st) != 0) {
-		cc_log("Diagnostic file %s not in cache", cached_dia);
-		return;
-	}
-
 	// Occasionally, e.g. on hard reset, our cache ends up as just filesystem
 	// meta-data with no content. Catch an easy case of this.
 	if (st.st_size == 0) {
@@ -2066,6 +2087,12 @@ from_cache(enum fromcache_call_mode mode, bool put_object_in_manifest)
 	// If the dependency file should be in the cache, check that it is.
 	if (produce_dep_file && stat(cached_dep, &st) != 0) {
 		cc_log("Dependency file %s missing in cache", cached_dep);
+		return;
+	}
+
+	// Check if the diagnostic file is there.
+	if (output_dia && stat(cached_dia, &st) != 0) {
+		cc_log("Diagnostic file %s not in cache", cached_dia);
 		return;
 	}
 
@@ -2280,8 +2307,6 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	struct args *dep_args = args_init(0, NULL);
 
 	bool found_color_diagnostics = false;
-	int debug_level = 0;
-	const char *debug_argument = NULL;
 
 	int argc = expanded_args->argc;
 	char **argv = expanded_args->argv;
@@ -2487,7 +2512,10 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 		if (str_startswith(argv[i], "-fdebug-prefix-map=")) {
-			debug_prefix_map = x_strdup(argv[i] + 19);
+			debug_prefix_maps = x_realloc(
+				debug_prefix_maps,
+				(debug_prefix_maps_len + 1) * sizeof(char *));
+			debug_prefix_maps[debug_prefix_maps_len++] = x_strdup(argv[i] + 19);
 			args_add(stripped_args, argv[i]);
 			continue;
 		}
@@ -2495,38 +2523,23 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		// Debugging is handled specially, so that we know if we can strip line
 		// number info.
 		if (str_startswith(argv[i], "-g") && !compiler_is_msvc(args)) {
-			const char *pLevel = argv[i] + 2;
-			if (str_startswith(argv[i], "-ggdb")) {
-				pLevel = argv[i] + 5;
-			} else if (str_startswith(argv[i], "-gstabs")) {
-				pLevel = argv[i] + 7;
-			} else if (str_startswith(argv[i], "-gcoff")) {
-				pLevel = argv[i] + 6;
-			} else if (str_startswith(argv[i], "-gxcoff")) {
-				pLevel = argv[i] + 7;
-			} else if (str_startswith(argv[i], "-gvms")) {
-				pLevel = argv[i] + 5;
+			generating_debuginfo = true;
+			args_add(stripped_args, argv[i]);
+			if (conf->unify && !str_eq(argv[i], "-g0")) {
+				cc_log("%s used; disabling unify mode", argv[i]);
+				conf->unify = false;
 			}
-
-			// Deduce level from argument, default is 2.
-			int foundlevel = -1;
-			if (pLevel[0] == '\0') {
-				foundlevel = 2;
-			} else if (pLevel[0] >= '0' && pLevel[0] <= '9') {
-				foundlevel = atoi(pLevel);
+			if (str_eq(argv[i], "-g3")) {
+				cc_log("%s used; not compiling preprocessed code", argv[i]);
+				conf->run_second_cpp = true;
 			}
-
-			if (foundlevel >= 0) {
-				debug_level = foundlevel;
-				debug_argument = argv[i];
-				continue;
-			}
+			continue;
 		}
 
 		if ((str_startswith(argv[i], "-O") ||
 		     str_startswith(argv[i], "/O")) && compiler_is_msvc(args)) {
-			debug_level = 1;
-			debug_argument = argv[i];
+			generating_debuginfo = true;
+			args_add(stripped_args, argv[i]);
 			continue;
 		}
 
@@ -2918,19 +2931,6 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 	} // for
 
-	if (debug_level > 0) {
-		generating_debuginfo = true;
-		args_add(stripped_args, debug_argument);
-		if (conf->unify) {
-			cc_log("%s used; disabling unify mode", debug_argument);
-			conf->unify = false;
-		}
-		if (debug_level >= 3 && !conf->run_second_cpp) {
-			cc_log("%s used; not compiling preprocessed code", debug_argument);
-			conf->run_second_cpp = true;
-		}
-	}
-
 	if (found_S_opt) {
 		// Even if -gsplit-dwarf is given, the .dwo file is not generated when -S
 		// is also given.
@@ -3308,7 +3308,12 @@ cc_reset(void)
 	free(primary_config_path); primary_config_path = NULL;
 	free(secondary_config_path); secondary_config_path = NULL;
 	free(current_working_dir); current_working_dir = NULL;
-	free(debug_prefix_map); debug_prefix_map = NULL;
+	for (size_t i = 0; i < debug_prefix_maps_len; i++) {
+		free(debug_prefix_maps[i]);
+		debug_prefix_maps[i] = NULL;
+	}
+	free(debug_prefix_maps); debug_prefix_maps = NULL;
+	debug_prefix_maps_len = 0;
 	free(profile_dir); profile_dir = NULL;
 	free(included_pch_file); included_pch_file = NULL;
 	args_free(orig_args); orig_args = NULL;

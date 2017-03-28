@@ -282,12 +282,12 @@ int win32execute(char *path, char **argv, int doreturn,
 #    endif
 #    include <windows.h>
 #    define strcasecmp   _stricmp
-#    define mkdir(a, b) mkdir(a)
-#    define link(src, dst) (CreateHardLink(dst, src, NULL) ? 0 : -1)
-#    define lstat(a, b) stat(a, b)
-#    define execv(a, b) win32execute(a, b, 0, -1, -1)
-#    define execute(a, b, c, d) win32execute(*(a), a, 1, b, c)
-#    define DIR_DELIM_CH '/'
+#    define mkdir(a,b) mkdir(a)
+#    define link(src,dst) (CreateHardLink(dst,src,NULL) ? 0 : -1)
+#    define lstat(a,b) stat(a,b)
+#    define execv(a,b) win32execute(a,b,0,-1,-1)
+#    define execute(a,b,c,d) win32execute(*(a),a,1,b,c)
+#    define DIR_DELIM_CH '\\'
 #    define PATH_DELIM ";"
 #    define F_RDLCK 0
 #    define F_WRLCK 0
@@ -296,7 +296,7 @@ int win32execute(char *path, char **argv, int doreturn,
 #       define S_ISREG(x) (((x) & _S_IFMT) == _S_IFREG)
 #    endif
 #else
-#    define DIR_DELIM_CH '\\'
+#    define DIR_DELIM_CH '/'
 #    define PATH_DELIM ":"
 #endif
 
