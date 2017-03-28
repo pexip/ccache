@@ -179,7 +179,7 @@ cleanup_dir(struct conf *conf, const char *dir)
 	// order) until the levels are below limit_multiple.
 	cache_size_threshold = (uint64_t)(conf->max_size * conf->limit_multiple / 16);
 	files_in_cache_threshold =
-	  (uint64_t)(conf->max_files * conf->limit_multiple / 16);
+		(uint64_t)(conf->max_files * conf->limit_multiple / 16);
 
 	num_files = 0;
 	cache_size = 0;
@@ -250,7 +250,7 @@ wipe_dir(struct conf *conf, const char *dir)
 	cc_log("Clearing out cache directory %s", dir);
 
 	files_in_cache_threshold =
-	  (size_t)(conf->max_files * conf->limit_multiple / 16);
+		(size_t)(conf->max_files * conf->limit_multiple / 16);
 	files_in_cache = 0;
 
 	traverse(dir, wipe_fn);

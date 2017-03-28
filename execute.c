@@ -214,21 +214,21 @@ win32execute(char *path, char **argv, int doreturn,
 		LPVOID lpMsgBuf;
 		DWORD dw = GetLastError();
 		FormatMessage(
-		  FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		  FORMAT_MESSAGE_FROM_SYSTEM |
-		  FORMAT_MESSAGE_IGNORE_INSERTS,
-		  NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf,
-		  0, NULL);
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf,
+			0, NULL);
 
 		LPVOID lpDisplayBuf =
-		  (LPVOID) LocalAlloc(LMEM_ZEROINIT,
-		                      (lstrlen((LPCTSTR) lpMsgBuf)
-		                       + lstrlen((LPCTSTR) __FILE__) + 200)
-		                      * sizeof(TCHAR));
+			(LPVOID) LocalAlloc(LMEM_ZEROINIT,
+			                    (lstrlen((LPCTSTR) lpMsgBuf)
+			                     + lstrlen((LPCTSTR) __FILE__) + 200)
+			                    * sizeof(TCHAR));
 		_snprintf((LPTSTR) lpDisplayBuf,
 		          LocalSize(lpDisplayBuf) / sizeof(TCHAR),
 		          TEXT(
-		            "%s failed with error %d: %s"), __FILE__, dw, (char *)lpMsgBuf);
+								"%s failed with error %d: %s"), __FILE__, dw, (char *)lpMsgBuf);
 
 		cc_log("can't execute %s; OS returned error: %s",
 		       path, (char *)lpDisplayBuf);

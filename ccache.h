@@ -7,7 +7,7 @@
 #include "counters.h"
 
 #ifdef __GNUC__
-#define ATTR_FORMAT(x, y, z) __attribute__((format(x, y, z)))
+#define ATTR_FORMAT(x, y, z) __attribute__((format (x, y, z)))
 #define ATTR_NORETURN __attribute__((noreturn));
 #else
 #define ATTR_FORMAT(x, y, z)
@@ -132,7 +132,7 @@ void copy_fd(int fd_in, int fd_out);
 int copy_file(const char *src, const char *dest, int compress_level);
 int move_file(const char *src, const char *dest, int compress_level);
 int move_uncompressed_file(const char *src, const char *dest,
-							 int compress_level);
+                           int compress_level);
 bool file_is_compressed(const char *filename);
 int create_dir(const char *dir);
 int create_parent_dirs(const char *path);
@@ -199,7 +199,7 @@ void stats_zero(void);
 void stats_summary(struct conf *conf);
 void stats_update_size(uint64_t size, unsigned files);
 void stats_get_obsolete_limits(const char *dir, unsigned *maxfiles,
-								 uint64_t *maxsize);
+                               uint64_t *maxsize);
 void stats_set_sizes(const char *dir, unsigned num_files, uint64_t total_size);
 void stats_add_cleanup(const char *dir, unsigned count);
 void stats_timestamp(time_t time, struct counters *counters);
@@ -249,7 +249,7 @@ void block_signals(void);
 void unblock_signals(void);
 char * make_relative_path(char *path);
 bool cc_process_args(struct args *args, struct args **preprocessor_args,
-					 struct args **compiler_args);
+                    struct args **compiler_args);
 void cc_reset(void);
 bool is_precompiled_header(const char *path);
 
@@ -276,7 +276,7 @@ char *win32argvtos(char *prefix, char **argv);
 char *win32getshell(char *path);
 char* win32getexecutable(char *path);
 int win32execute(char *path, char **argv, int doreturn,
-				 int fd_stdout, int fd_stderr);
+                 int fd_stdout, int fd_stderr);
 #    ifndef _WIN32_WINNT
 #    define _WIN32_WINNT 0x0501
 #    endif

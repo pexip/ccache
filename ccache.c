@@ -34,40 +34,40 @@
 #define TO_STRING(x) STRINGIFY(x)
 
 static const char VERSION_TEXT[] =
-  MYNAME " version %s\n"
-  "\n"
-  "Copyright (C) 2002-2007 Andrew Tridgell\n"
-  "Copyright (C) 2009-2017 Joel Rosdahl\n"
-  "\n"
-  "This program is free software; you can redistribute it and/or modify it under\n"
-  "the terms of the GNU General Public License as published by the Free Software\n"
-  "Foundation; either version 3 of the License, or (at your option) any later\n"
-  "version.\n";
+	MYNAME " version %s\n"
+	"\n"
+	"Copyright (C) 2002-2007 Andrew Tridgell\n"
+	"Copyright (C) 2009-2017 Joel Rosdahl\n"
+	"\n"
+	"This program is free software; you can redistribute it and/or modify it under\n"
+	"the terms of the GNU General Public License as published by the Free Software\n"
+	"Foundation; either version 3 of the License, or (at your option) any later\n"
+	"version.\n";
 
 static const char USAGE_TEXT[] =
-  "Usage:\n"
-  "    " MYNAME " [options]\n"
-  "    " MYNAME " compiler [compiler options]\n"
-  "    compiler [compiler options]          (via symbolic link)\n"
-  "\n"
-  "Options:\n"
-  "    -c, --cleanup         delete old files and recalculate size counters\n"
-  "                          (normally not needed as this is done automatically)\n"
-  "    -C, --clear           clear the cache completely (except configuration)\n"
-  "    -F, --max-files=N     set maximum number of files in cache to N (use 0 for\n"
-  "                          no limit)\n"
-  "    -M, --max-size=SIZE   set maximum size of cache to SIZE (use 0 for no\n"
-  "                          limit); available suffixes: k, M, G, T (decimal) and\n"
-  "                          Ki, Mi, Gi, Ti (binary); default suffix: G\n"
-  "    -o, --set-config=K=V  set configuration key K to value V\n"
-  "    -p, --print-config    print current configuration options\n"
-  "    -s, --show-stats      show statistics summary\n"
-  "    -z, --zero-stats      zero statistics counters\n"
-  "\n"
-  "    -h, --help            print this help text\n"
-  "    -V, --version         print version and copyright information\n"
-  "\n"
-  "See also <https://ccache.samba.org>.\n";
+	"Usage:\n"
+	"    " MYNAME " [options]\n"
+	"    " MYNAME " compiler [compiler options]\n"
+	"    compiler [compiler options]          (via symbolic link)\n"
+	"\n"
+	"Options:\n"
+	"    -c, --cleanup         delete old files and recalculate size counters\n"
+	"                          (normally not needed as this is done automatically)\n"
+	"    -C, --clear           clear the cache completely (except configuration)\n"
+	"    -F, --max-files=N     set maximum number of files in cache to N (use 0 for\n"
+	"                          no limit)\n"
+	"    -M, --max-size=SIZE   set maximum size of cache to SIZE (use 0 for no\n"
+	"                          limit); available suffixes: k, M, G, T (decimal) and\n"
+	"                          Ki, Mi, Gi, Ti (binary); default suffix: G\n"
+	"    -o, --set-config=K=V  set configuration key K to value V\n"
+	"    -p, --print-config    print current configuration options\n"
+	"    -s, --show-stats      show statistics summary\n"
+	"    -z, --zero-stats      zero statistics counters\n"
+	"\n"
+	"    -h, --help            print this help text\n"
+	"    -V, --version         print version and copyright information\n"
+	"\n"
+	"See also <https://ccache.samba.org>.\n";
 
 // Global configuration data.
 struct conf *conf = NULL;
@@ -301,7 +301,8 @@ add_prefix(struct args *args, char *prefix_command)
 	struct args *prefix = args_init(0, NULL);
 	char *e = x_strdup(prefix_command);
 	char *saveptr = NULL;
-	for (char *tok = strtok_r(e, " ", &saveptr); tok;
+	for (char *tok = strtok_r(e, " ", &saveptr);
+	     tok;
 	     tok = strtok_r(NULL, " ", &saveptr)) {
 		char *p;
 
@@ -549,7 +550,7 @@ get_path_in_cache(const char *name, const char *suffix)
 	}
 
 	char *result =
-	  format("%s/%s%s", path, name + conf->cache_dir_levels, suffix);
+		format("%s/%s%s", path, name + conf->cache_dir_levels, suffix);
 	free(path);
 	return result;
 }
@@ -1063,7 +1064,7 @@ put_file_in_cache(const char *source, const char *dest)
 	}
 	if (!do_link) {
 		int ret = copy_file(
-		  source, dest, conf->compression ? conf->compression_level : 0);
+			source, dest, conf->compression ? conf->compression_level : 0);
 		if (ret != 0) {
 			cc_log("Failed to copy %s to %s: %s", source, dest, strerror(errno));
 			stats_update(STATS_ERROR);
@@ -1236,10 +1237,10 @@ to_cache(struct args *args)
 
 	cc_log("Running real compiler");
 	int status =
-	  execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
+		execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
 
 	if (compiler_is_msvc(args)) {
-		args_pop(args, 3);  // -Foooutput.obj input.c
+		args_pop(args, 2);  // -Foooutput.obj input.c
 	} else {
 		args_pop(args, 3);  //	-o output.o input.c
 	}
@@ -1275,7 +1276,7 @@ to_cache(struct args *args)
 			}
 
 			int fd_result =
-			  open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+				open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
 			if (fd_result == -1) {
 				cc_log("Failed opening %s: %s", tmp_stderr, strerror(errno));
 				failed();
@@ -1348,7 +1349,7 @@ to_cache(struct args *args)
 		}
 
 		int fd_result =
-		  open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+			open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
 		if (fd_result == -1) {
 			cc_log("Failed opening %s: %s", tmp_stderr, strerror(errno));
 			failed();
@@ -1421,8 +1422,8 @@ to_cache(struct args *args)
 	}
 	if (st.st_size > 0) {
 		if (move_uncompressed_file(
-		      tmp_stderr, cached_stderr,
-		      conf->compression ? conf->compression_level : 0) != 0) {
+					tmp_stderr, cached_stderr,
+					conf->compression ? conf->compression_level : 0) != 0) {
 			cc_log("Failed to move %s to %s: %s", tmp_stderr, cached_stderr,
 			       strerror(errno));
 			stats_update(STATS_ERROR);
@@ -1686,7 +1687,7 @@ hash_compiler(struct mdfour *hash, struct stat *st, const char *path,
 		hash_file(hash, path);
 	} else { // command string
 		if (!hash_multicommand_output(
-		      hash, conf->compiler_check, orig_args->argv[0])) {
+					hash, conf->compiler_check, orig_args->argv[0])) {
 			fatal("Failure running compiler check command: %s", conf->compiler_check);
 		}
 	}
@@ -2082,7 +2083,7 @@ from_cache(enum fromcache_call_mode mode, bool put_object_in_manifest)
 
 	// (If mode != FROMCACHE_DIRECT_MODE, the dependency file is created by gcc.)
 	bool produce_dep_file =
-	  generating_dependencies && mode == FROMCACHE_DIRECT_MODE;
+		generating_dependencies && mode == FROMCACHE_DIRECT_MODE;
 
 	// If the dependency file should be in the cache, check that it is.
 	if (produce_dep_file && stat(cached_dep, &st) != 0) {
@@ -2974,7 +2975,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	}
 
 	output_is_precompiled_header =
-	  actual_language && strstr(actual_language, "-header");
+		actual_language && strstr(actual_language, "-header");
 
 	if (output_is_precompiled_header
 	    && !(conf->sloppiness & SLOPPY_PCH_DEFINES)) {

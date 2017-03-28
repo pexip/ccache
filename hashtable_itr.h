@@ -1,5 +1,4 @@
-/* Copyright (C) 2002, 2004 Christopher Clark <firstname.lastname@cl.cam.ac.uk>
- */
+/* Copyright (C) 2002, 2004 Christopher Clark <firstname.lastname@cl.cam.ac.uk> */
 
 #ifndef __HASHTABLE_ITR_CWC22__
 #define __HASHTABLE_ITR_CWC22__
@@ -11,10 +10,10 @@
  * accessor functions. */
 struct hashtable_itr
 {
-	struct hashtable *h;
-	struct entry *e;
-	struct entry *parent;
-	unsigned int index;
+    struct hashtable *h;
+    struct entry *e;
+    struct entry *parent;
+    unsigned int index;
 };
 
 
@@ -33,7 +32,7 @@ hashtable_iterator(struct hashtable *h);
 extern inline void *
 hashtable_iterator_key(struct hashtable_itr *i)
 {
-	return i->e->k;
+    return i->e->k;
 }
 #else
 void *
@@ -47,7 +46,7 @@ hashtable_iterator_key(struct hashtable_itr *i);
 extern inline void *
 hashtable_iterator_value(struct hashtable_itr *i)
 {
-	return i->e->v;
+    return i->e->v;
 }
 #else
 void *
@@ -80,10 +79,10 @@ hashtable_iterator_search(struct hashtable_itr *itr,
                           struct hashtable *h, void *k);
 
 #define DEFINE_HASHTABLE_ITERATOR_SEARCH(fnname, keytype) \
-	int fnname(struct hashtable_itr *i, struct hashtable *h, keytype *k) \
-	{ \
-		return (hashtable_iterator_search(i, h, k)); \
-	}
+int fnname (struct hashtable_itr *i, struct hashtable *h, keytype *k) \
+{ \
+    return (hashtable_iterator_search(i,h,k)); \
+}
 
 
 
@@ -92,23 +91,23 @@ hashtable_iterator_search(struct hashtable_itr *itr,
 /*
  * Copyright (c) 2002, 2004, Christopher Clark
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *
+ * 
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *
+ * 
  * * Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- *
+ * 
  * * Neither the name of the original author; nor the names of any contributors
  * may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- *
- *
+ * 
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -120,4 +119,4 @@ hashtable_iterator_search(struct hashtable_itr *itr,
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+*/

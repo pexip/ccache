@@ -61,13 +61,13 @@ TEST(args_init_from_gcc_atfile)
 	struct args *args;
 	const char *argtext =
 #ifdef _WIN32
-	  // On windows, we need to keep any \ that are directory delimiter.
-	  // So use quotes to put space in arguments.
-	  "first\r'sec\tond'\tthi\\rd\nfourth  \t\"fif th\" \"si'x th\""
-	  " 'seve\nth'";
+		// On windows, we need to keep any \ that are directory delimiter.
+		// So use quotes to put space in arguments.
+		"first\r'sec\tond'\tthi\\rd\nfourth  \t\"fif th\" \"si'x th\""
+		" 'seve\nth'";
 #else
-	  "first\rsec\\\tond\tthi\\\\rd\nfourth  \tfif\\ th \"si'x\\\" th\""
-	  " 'seve\nth'\\";
+		"first\rsec\\\tond\tthi\\\\rd\nfourth  \tfif\\ th \"si'x\\\" th\""
+		" 'seve\nth'\\";
 #endif
 
 	create_file("gcc_atfile", argtext);
@@ -206,13 +206,13 @@ TEST(args_insert)
 	CHECK_INT_EQ(9, args->argc);
 	args_insert(args, 1, src5, false);
 	CHECK_STR_EQ_FREE2(
-	  "first one alpha beta gamma second beta gamma fourth fifth",
-	  args_to_string(args));
+		"first one alpha beta gamma second beta gamma fourth fifth",
+		args_to_string(args));
 	CHECK_INT_EQ(10, args->argc);
 	args_insert(args, 1, src6, false);
 	CHECK_STR_EQ_FREE2(
-	  "first one alpha beta gamma second beta gamma fourth fifth",
-	  args_to_string(args));
+		"first one alpha beta gamma second beta gamma fourth fifth",
+		args_to_string(args));
 	CHECK_INT_EQ(10, args->argc);
 
 	args_free(args);

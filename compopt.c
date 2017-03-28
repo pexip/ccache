@@ -122,15 +122,15 @@ find(const char *option)
 	key.name = option;
 	if (option[0] == '-') {
 		return bsearch(
-		         &key, compopts, sizeof(compopts) / sizeof(compopts[0]),
-		         sizeof(compopts[0]),
-		         compare_compopts);
+			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
+			sizeof(compopts[0]),
+			compare_compopts);
 	} else {
 		return bsearch(
-		         &key, compopts_msvc, sizeof(compopts_msvc) /
-		         sizeof(compopts_msvc[0]),
-		         sizeof(compopts[0]),
-		         compare_compopts);
+			&key, compopts_msvc, sizeof(compopts_msvc) /
+			sizeof(compopts_msvc[0]),
+			sizeof(compopts[0]),
+			compare_compopts);
 	}
 }
 
@@ -141,13 +141,13 @@ find_prefix(const char *option)
 	key.name = option;
 	if (option[0] == '-') {
 		return bsearch(
-		         &key, compopts, sizeof(compopts) / sizeof(compopts[0]),
-		         sizeof(compopts[0]), compare_prefix_compopts);
+			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
+			sizeof(compopts[0]), compare_prefix_compopts);
 	} else {
 		return bsearch(
-		         &key, compopts_msvc, sizeof(compopts_msvc) /
-		         sizeof(compopts_msvc[0]),
-		         sizeof(compopts[0]), compare_prefix_compopts);
+			&key, compopts_msvc, sizeof(compopts_msvc) /
+			sizeof(compopts_msvc[0]),
+			sizeof(compopts[0]), compare_prefix_compopts);
 	}
 }
 

@@ -56,36 +56,41 @@ char *optarg;
 int
 getopt_long(int argc, char *const argv[],
             const char *optstring,
-            const struct option *longopts, int *longindex)
+            const struct option * longopts, int *longindex)
 {
 	static char *place = EMSG; /* option letter processing */
-	char *oli;                 /* option letter list index */
+	char        *oli;          /* option letter list index */
 
-	if (!*place) { /* update scanning pointer */
-		if (optind >= argc) {
+	if (!*place)
+	{ /* update scanning pointer */
+		if (optind >= argc)
+		{
 			place = EMSG;
 			return -1;
 		}
 
 		place = argv[optind];
 
-		if (place[0] != '-') {
+		if (place[0] != '-')
+		{
 			place = EMSG;
 			return -1;
 		}
 
 		place++;
 
-		if (place[0] && place[0] == '-' && place[1] == '\0') { /* found "--" */
+		if (place[0] && place[0] == '-' && place[1] == '\0')
+		{ /* found "--" */
 			++optind;
 			place = EMSG;
 			return -1;
 		}
 
-		if (place[0] && place[0] == '-' && place[1]) {
+		if (place[0] && place[0] == '-' && place[1])
+		{
 			/* long option */
 			size_t namelen;
-			int i;
+			int    i;
 
 			place++;
 
@@ -93,54 +98,59 @@ getopt_long(int argc, char *const argv[],
 			for (i = 0; longopts[i].name != NULL; i++)
 			{
 				if (strlen(longopts[i].name) == namelen
-				    && strncmp(place, longopts[i].name, namelen) == 0) {
-					if (longopts[i].has_arg) {
-						if (place[namelen] == '=') {
+					&& strncmp(place, longopts[i].name, namelen) == 0)
+				{
+					if (longopts[i].has_arg)
+					{
+						if (place[namelen] == '=')
 							optarg = place + namelen + 1;
-						} else if (optind < argc - 1) {
+						else if (optind < argc - 1)
+						{
 							optind++;
 							optarg = argv[optind];
-						} else {
-							if (optstring[0] == ':') {
+						}
+						else
+						{
+							if (optstring[0] == ':')
 								return BADARG;
-							}
-							if (opterr) {
+							if (opterr)
 								fprintf(stderr,
-								        "%s: option requires an argument -- %s\n",
-								        argv[0], place);
-							}
+									"%s: option requires an argument -- %s\n",
+									argv[0], place);
 							place = EMSG;
 							optind++;
 							return BADCH;
 						}
-					} else {
+					}
+					else
+					{
 						optarg = NULL;
-						if (place[namelen] != 0) {
+						if (place[namelen] != 0)
+						{
 							/* XXX error? */
 						}
 					}
 
 					optind++;
 
-					if (longindex) {
+					if (longindex)
 						*longindex = i;
-					}
 
 					place = EMSG;
 
-					if (longopts[i].flag == NULL) {
+					if (longopts[i].flag == NULL)
 						return longopts[i].val;
-					} else {
+					else
+					{
 						*longopts[i].flag = longopts[i].val;
 						return 0;
 					}
 				}
 			}
 
-			if (opterr && optstring[0] != ':') {
+			if (opterr && optstring[0] != ':')
 				fprintf(stderr,
-				        "%s: illegal option -- %s\n", argv[0], place);
-			}
+					"%s: illegal option -- %s\n", argv[0], place);
 			place = EMSG;
 			optind++;
 			return BADCH;
@@ -151,40 +161,40 @@ getopt_long(int argc, char *const argv[],
 	optopt = (int) *place++;
 
 	oli = strchr(optstring, optopt);
-	if (!oli) {
-		if (!*place) {
+	if (!oli)
+	{
+		if (!*place)
 			++optind;
-		}
-		if (opterr && *optstring != ':') {
+		if (opterr && *optstring != ':')
 			fprintf(stderr,
-			        "%s: illegal option -- %c\n", argv[0], optopt);
-		}
+				"%s: illegal option -- %c\n", argv[0], optopt);
 		return BADCH;
 	}
 
-	if (oli[1] != ':') { /* don't need argument */
+	if (oli[1] != ':')
+	{ /* don't need argument */
 		optarg = NULL;
-		if (!*place) {
+		if (!*place)
 			++optind;
-		}
-	} else { /* need an argument */
-		if (*place) { /* no white space */
+	}
+	else
+	{ /* need an argument */
+		if (*place) /* no white space */
 			optarg = place;
-		} else if (argc <= ++optind) { /* no arg */
+		else if (argc <= ++optind)
+		{ /* no arg */
 			place = EMSG;
-			if (*optstring == ':') {
+			if (*optstring == ':')
 				return BADARG;
-			}
-			if (opterr) {
+			if (opterr)
 				fprintf(stderr,
-				        "%s: option requires an argument -- %c\n",
-				        argv[0], optopt);
-			}
+					"%s: option requires an argument -- %c\n",
+					argv[0], optopt);
 			return BADCH;
-		} else {
+		}
+		else
 			/* white space */
 			optarg = argv[optind];
-		}
 		place = EMSG;
 		++optind;
 	}
