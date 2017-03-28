@@ -620,8 +620,12 @@ remember_include_file(char *path, struct mdfour *cpp_hash, bool system)
 			continue;
 		}
 		if (strncmp(canonical, ignore, ignore_len) == 0
-		    && (ignore[ignore_len-1] == DIR_DELIM_CH
-		        || canonical[ignore_len] == DIR_DELIM_CH
+		    && (ignore[ignore_len-1] == '/'
+		        || canonical[ignore_len] == '/'
+#ifdef _WIN32
+		        || ignore[ignore_len-1] == '\\'
+		        || canonical[ignore_len] == '\\'
+#endif
 		        || canonical[ignore_len] == '\0')) {
 			goto ignore;
 		}
