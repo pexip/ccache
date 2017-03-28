@@ -897,6 +897,9 @@ EOF
 [ x$2 = x-fcolor-diagnostics ] && shift
 [ x$2 = x-fdiagnostics-color ] && shift
 [ x$2 = x-std=gnu99 ] && shift
+[ x$2 = x-std=c99 ] && shift
+[ x$2 = x-m64 ] && shift
+[ x$2 = x-m32 ] && shift
 [ x$3 = x-o ] && rm $4
 EOF
     chmod +x prefix-remove.sh
@@ -915,6 +918,9 @@ EOF
 [ x$2 = x-fcolor-diagnostics ] && shift
 [ x$2 = x-fdiagnostics-color ] && shift
 [ x$2 = x-std=gnu99 ] && shift
+[ x$2 = x-std=c99 ] && shift
+[ x$2 = x-m64 ] && shift
+[ x$2 = x-m32 ] && shift
 [ x$3 = x-o ] && cp /dev/null $4
 EOF
     chmod +x prefix-empty.sh
