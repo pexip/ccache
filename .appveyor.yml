@@ -13,7 +13,7 @@
 #-----------------------------------------------------------------------------
 
 # Simple versioning scheme.
-version: '{build}'
+version: 3.3.4-{branch}-{build}
 
 # The MSVC2015 image have many stuff we need.
 image: Visual Studio 2015
@@ -146,12 +146,12 @@ test_script:
   - make PLATFORM=%PLATFORM% test
 
 after_test:
-  - 7z a ccache-$(version).zip ccache.exe AUTHORS.txt LICENSE.txt MANUAL.txt GPL*.txt NEWS.txt
+  - 7z a ccache-%APPVEYOR_BUILD_VERSION%.zip ccache.exe AUTHORS.txt LICENSE.txt MANUAL.txt GPL*.txt NEWS.txt
 
 artifacts:
   - path: config.log
     name: logs
 
-  - path: ccache.exe
-    name: ccache
+  - path: '*.zip'
+    name: ccache for windows
     type: Zip

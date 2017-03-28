@@ -19,8 +19,8 @@
 
 #include "config.h"
 
-#ifdef WIN32
-#   include <windows.h>
+#ifdef _WIN32
+#   include <Windows.h>
 #   include <direct.h>
 #   include <io.h>
 #   include <process.h>
