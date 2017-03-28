@@ -232,7 +232,7 @@ copy_fd(int fd_in, int fd_out)
 	gzclose(gz_in);
 }
 
-#ifndef HAVE_MKSTEMP
+#if defined(_WIN32) || !defined(HAVE_MKSTEMP)
 // Cheap and nasty mkstemp replacement.
 int
 mkstemp(char *template)
