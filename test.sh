@@ -3442,7 +3442,7 @@ OFLAGS="-o "
 
 compiler_version="`$COMPILER --version 2>&1 | head -1`"
 case $compiler_version in
-    *gcc*|*g++*|2.95*)
+    *gcc*|*g++*|2.95*|cc*)
         COMPILER_TYPE_GCC=true
         ;;
     *clang*)
