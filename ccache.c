@@ -2507,7 +2507,24 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		// CL never have space.
+		// CL /Fo: and (optional) space.
+		if (str_startswith(argv[i], "/Fo:")) {
+			if (strlen(argv[i]) > 4) {
+				output_obj = make_relative_path(x_strdup(&argv[i][4]));
+			} else {
+				if (i == argc-1) {
+					cc_log("Missing argument to %s", argv[i]);
+					stats_update(STATS_ARGS);
+					result = false;
+					goto out;
+				}
+				output_obj = make_relative_path(x_strdup(argv[i+1]));
+				i++;
+				continue;
+			}
+		}
+
+		// CL /Fo w/o space.
 		if (str_startswith(argv[i], "/Fo")) {
 			if (argv[i][3] == '"' && argv[i][strlen(argv[i])-1] == '"') {
 				argv[i][strlen(argv[i])-1] = '\0';
@@ -2836,28 +2853,24 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		// Same as above but options with concatenated argument beginning with a
-		// slash.
-		if (argv[i][0] == '-' || (compiler_is_msvc(args) && argv[i][0] == '/')) {
-			char *slash_pos = strpbrk(argv[i]+1, "/\"'");
-			if (slash_pos) {
-				char *option = x_strndup(argv[i], slash_pos - argv[i]);
-				if (compopt_takes_concat_arg(option) && compopt_takes_path(option)) {
-					char *relpath = make_relative_path(x_strdup(slash_pos));
-					char *new_option = format("%s%s", option, relpath);
-					if (compopt_affects_cpp(option)) {
-						args_add(cpp_args, new_option);
-					} else {
-						args_add(stripped_args, new_option);
-					}
-					free(new_option);
-					free(relpath);
-					free(option);
-					continue;
+		// Same as above but options with concatenated argument.
+		int arg_len = compopt_takes_concat_arg(argv[i]);
+		if (arg_len > 0) {
+			char *option = x_strndup(argv[i], arg_len);
+			if (compopt_takes_path(option)) {
+				char *relpath = make_relative_path(x_strdup(&argv[i][arg_len]));
+				char *new_option = format("%s%s", option, relpath);
+				if (compopt_affects_cpp(option)) {
+					args_add(cpp_args, new_option);
 				} else {
-					free(option);
+					args_add(stripped_args, new_option);
 				}
+				free(new_option);
+				free(relpath);
+				free(option);
+				continue;
 			}
+			free(option);
 		}
 
 		// Options that take an argument.

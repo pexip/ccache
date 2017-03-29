@@ -774,4 +774,50 @@ TEST(CL_dependency_dash_flags_should_only_be_sent_to_the_preprocessor)
 	args_free(orig);
 }
 
+TEST(CL_output_filenames)
+{
+	struct args *orig =
+		args_init_from_string("cl -c foo.c "
+		                      "/Faassembly_listing.txt "
+		                      "/Fddebug.pdb "
+		                      "/Fefoo.exe "
+		                      "/Fifoo.i "
+		                      "/Fmmap.txt "
+		                      "/Fofoo.obj "
+		                      "/Fpheaders.pch "
+		                      "/Frsource_browser.sbr "
+		                      "/FRextended.sbr "
+		                      "/Fa: assembly_listing.txt "
+		                      "/Fd: debug.pdb "
+		                      "/Fe: foo.exe "
+		                      "/Fi: foo.i "
+		                      "/Fm: map.txt "
+		                      "/Fo: foo.obj "
+		                      "/Fp: headers.pch "
+		                      "/Fr: source_browser.sbr "
+		                      "/FR: extended.sbr ");
+
+	struct args *act_cpp = NULL, *act_cc = NULL;
+	create_file("foo.c", "");
+
+	conf->run_second_cpp = false;
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+
+	CHECK_INT_EQ(1 + 3*8, act_cpp->argc); // cl ...
+	CHECK_STR_EQ("/Faassembly_listing.txt", act_cpp->argv[1]);
+	CHECK_STR_EQ("/Fddebug.pdb", act_cpp->argv[2]);
+	CHECK_STR_EQ("extended.sbr", act_cpp->argv[24]);
+
+	CHECK_INT_EQ(2 + 3*8, act_cc->argc);  // cl ... -c
+	CHECK_STR_EQ("/Faassembly_listing.txt", act_cc->argv[1]);
+	CHECK_STR_EQ("extended.sbr", act_cc->argv[24]);
+	CHECK_STR_EQ("-c", act_cc->argv[25]);
+
+	CHECK_STR_EQ("foo.obj", output_obj);
+
+	args_free(orig);
+	args_free(act_cpp);
+	args_free(act_cc);
+}
+
 TEST_SUITE_END

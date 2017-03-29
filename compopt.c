@@ -86,20 +86,38 @@ static const struct compopt compopts[] = {
 
 // MSVC Specific options
 static const struct compopt compopts_msvc[] = {
-	{"/AI", TAKES_ARG| TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/C",  AFFECTS_CPP},
-	{"/D",  AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
-	{"/E",  TOO_HARD},
-	{"/EP", TOO_HARD},
-	{"/FI", AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/FU", AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/I",  AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/L",  TAKES_ARG},
-	{"/M",  TOO_HARD},
-	{"/P",  TOO_HARD},
-	{"/U",  AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
-	{"/X",  AFFECTS_CPP},
-	{"/u",  AFFECTS_CPP},
+	{"/AI",   TAKES_ARG| TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/C",    AFFECTS_CPP},
+	{"/D",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
+	{"/E",    TOO_HARD},
+	{"/EP",   TOO_HARD},
+	{"/FR",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // extended.sbr
+	{"/FR:",  TAKES_ARG | TAKES_PATH},                    // extended.sbr
+	{"/FI",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/FU",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},// #undef var
+	{"/Fa",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // assembly_listing.txt
+	{"/Fa:",  TAKES_ARG | TAKES_PATH},                    // assembly_listing.txt
+	{"/Fd",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // debug.pdb
+	{"/Fd:",  TAKES_ARG | TAKES_PATH},                    // debug.pdb
+	{"/Fe",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // foo.exe
+	{"/Fe:",  TAKES_ARG | TAKES_PATH},                    // foo.exe
+	{"/Fi",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // foo.i
+	{"/Fi:",  TAKES_ARG | TAKES_PATH},                    // foo.i
+	{"/Fm",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // map.txt
+	{"/Fm:",  TAKES_ARG | TAKES_PATH},                    // map.txt
+	{"/Fo",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // foo.obj
+	{"/Fo:",  TAKES_ARG | TAKES_PATH},                    // foo.obj
+	{"/Fp",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // headers.pch
+	{"/Fp:",  TAKES_ARG | TAKES_PATH},                    // headers.pch
+	{"/Fr",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // source_browser.sbr
+	{"/Fr:",  TAKES_ARG | TAKES_PATH},                    // source_browser.sbr
+	{"/I",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/L",    TAKES_ARG},
+	{"/M",    TOO_HARD},
+	{"/P",    TOO_HARD},
+	{"/U",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
+	{"/X",    AFFECTS_CPP},
+	{"/u",    AFFECTS_CPP},
 };
 
 static int
@@ -225,11 +243,12 @@ compopt_takes_arg(const char *option)
 	return co && (co->type & TAKES_ARG);
 }
 
-bool
+int
 compopt_takes_concat_arg(const char *option)
 {
-	const struct compopt *co = find(option);
-	return co && (co->type & TAKES_CONCAT_ARG);
+	const struct compopt *co = find_prefix(option);
+	return (co && (co->type & TAKES_CONCAT_ARG))
+	       ? (int)strlen(co->name) : 0;
 }
 
 // Determines if the prefix of the option matches any option and affects the
