@@ -66,6 +66,24 @@ TEST(dirname)
 #endif
 }
 
+TEST(str_quote_balance)
+{
+	CHECK(str_quote_balance("no quote"));
+	CHECK(str_quote_balance("bask-slashed \\\" quote"));
+	CHECK(str_quote_balance("balanced ending \"quote\""));
+	CHECK(str_quote_balance("\"several\" balanced \"quoted\" words"));
+	CHECK(!str_quote_balance("unbalanced \" quote"));
+	CHECK(!str_quote_balance("\"unbalanced \\\\\" quotes\""));
+#ifndef _WIN32
+	CHECK(str_quote_balance("'balanced' squote"));
+	CHECK(str_quote_balance("'balanced' mixed \"quote\""));
+	CHECK(str_quote_balance("'also \"balanced' \"mixed' quotes\""));
+	CHECK(str_quote_balance("'single \"balanced' \"mixed quotes\""));
+	CHECK(str_quote_balance("'double balanced' \"mixed 'quotes\""));
+	CHECK(!str_quote_balance("'un 'balanced' squote"));
+#endif
+}
+
 TEST(path_eq)
 {
 	CHECK(path_eq("/abc", "/abc"));

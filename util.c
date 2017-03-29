@@ -1365,6 +1365,33 @@ same_executable_name(const char *s1, const char *s2)
 #endif
 }
 
+// Returns true when an string does not contains quotes,
+// or quotes are well balanced (ie. even number).
+// Skip backslashed quotes, but not backslahed-backslash.
+bool str_quote_balance(const char *str)
+{
+	char quote = '\0';
+	bool backslash = false;
+	for (const char *p = str; *p; ++p) {
+		if (quote && *p == quote) {
+			quote = '\0';
+		} else if (!quote && !backslash && *p == '"') {
+			quote = *p;
+		}
+#ifndef _WIN32
+		else if (!quote && !backslash && *p == '\'') {
+			quote = *p;
+		}
+#endif
+		else if (*p == '\\') {
+			backslash = !backslash;
+		} else {
+			backslash = false;
+		}
+	}
+	return quote == '\0';
+}
+
 // Check whether two path are equals.
 bool
 path_eq(const char *s1, const char *s2)

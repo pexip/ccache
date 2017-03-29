@@ -30,6 +30,8 @@ args_init(int init_argc, char **init_args)
 	return args;
 }
 
+// Cut command line in words. But allow quotes to group several words
+// in one single argument.
 struct args *
 args_init_from_string(const char *command)
 {
@@ -37,9 +39,31 @@ args_init_from_string(const char *command)
 	char *q = p;
 	char *word, *saveptr = NULL;
 	struct args *args = args_init(0, NULL);
+	char *words = NULL;
 	while ((word = strtok_r(q, " \t\r\n", &saveptr))) {
-		args_add(args, word);
+		if (words) {
+			reformat(&words, "%s %s", words, word);
+			if (str_quote_balance(words)) {
+				if (words[0] == '"' && words[strlen(words)-1] == '"') {
+					words[strlen(words)-1] = '\0';
+					args_add(args, words+1);
+				} else {
+					args_add(args, words);
+				}
+				free(words);
+				words = NULL;
+			}
+		} else if (!str_quote_balance(word)) {
+			words = x_strdup(word);
+		} else {
+			args_add(args, word);
+		}
 		q = NULL;
+	}
+	// unbalanced argument left: shall we fail instead ?
+	if (words) {
+		args_add(args, words);
+		free(words);
 	}
 
 	free(p);

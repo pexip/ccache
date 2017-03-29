@@ -56,6 +56,18 @@ TEST(args_init_from_string)
 	args_free(args);
 }
 
+TEST(args_init_from_quoted_string)
+{
+	struct args *args = args_init_from_string("a \"b b\" c\" c \"c");
+	CHECK(args);
+	CHECK_INT_EQ(3, args->argc);
+	CHECK_STR_EQ("a", args->argv[0]);
+	CHECK_STR_EQ("b b", args->argv[1]);
+	CHECK_STR_EQ("c\" c \"c", args->argv[2]);
+	CHECK(!args->argv[3]);
+	args_free(args);
+}
+
 TEST(args_init_from_gcc_atfile)
 {
 	struct args *args;
