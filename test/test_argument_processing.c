@@ -636,8 +636,8 @@ TEST(CL_dash_Fo)
 	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
-	char *arg_string = format("cl -Fo%s/bar.obj -c %s/foo.c", current_working_dir,
-	                          current_working_dir);
+	char *arg_string = format("cl -Fo%s/bar.obj -c %s/foo.c",
+	                          current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
@@ -660,8 +660,8 @@ TEST(CL_slash_Fo)
 	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
-	char *arg_string = format("cl /Fo%s/bar.obj /c %s/foo.c", current_working_dir,
-	                          current_working_dir);
+	char *arg_string = format("cl /Fo%s/bar.obj /c %s/foo.c",
+	                          current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	free(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
@@ -672,6 +672,36 @@ TEST(CL_slash_Fo)
 	CHECK_INT_EQ(1, act_cpp->argc);
 	CHECK_STR_EQ("foo.c", input_file);
 	CHECK_STR_EQ("./bar.obj", output_obj);
+
+	args_free(orig);
+	args_free(act_cpp);
+	args_free(act_cc);
+}
+
+TEST(CL_slash_Fo_with_quotes)
+{
+	create_dir("Src Dir");
+	create_dir("Obj Dir");
+	create_file("Src Dir/foo.c", "//Not empty file");
+	char *current_working_dir = get_cwd();
+	free(conf->base_dir);
+	conf->base_dir = get_root();
+	char *arg_string = format("cl /Fo\"Obj Dir/\" /c \"Src Dir/foo.c\"");
+	struct args *orig = args_init_from_string(arg_string);
+	free(arg_string);
+
+	CHECK_INT_EQ(4, orig->argc);
+	CHECK_STR_EQ("/Fo\"Obj Dir/\"", orig->argv[1]);
+	CHECK_STR_EQ("Src Dir/foo.c", orig->argv[3]);
+
+	struct args *act_cpp = NULL, *act_cc = NULL;
+
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECK_INT_EQ(2, act_cc->argc);
+	CHECK_STR_EQ("-c",  act_cc->argv[1]);
+	CHECK_INT_EQ(1, act_cpp->argc);
+	CHECK_STR_EQ("Src Dir/foo.c", input_file);
+	CHECK_STR_EQ("Obj Dir/foo.obj", output_obj);
 
 	args_free(orig);
 	args_free(act_cpp);

@@ -2506,7 +2506,12 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		if (compiler_is_msvc(args) &&
 		    (str_startswith(argv[i], "/Fo") ||
 		     str_startswith(argv[i], "-Fo"))) {
-			output_obj = make_relative_path(x_strdup(&argv[i][3]));
+			if (argv[i][3] == '"' && argv[i][strlen(argv[i])-1] == '"') {
+				argv[i][strlen(argv[i])-1] = '\0';
+				output_obj = make_relative_path(x_strdup(&argv[i][4]));
+			} else {
+				output_obj = make_relative_path(x_strdup(&argv[i][3]));
+			}
 			continue;
 		}
 
