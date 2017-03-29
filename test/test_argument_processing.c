@@ -603,6 +603,18 @@ TEST(CL_slash_E_should_result_in_called_for_preprocessing)
 	args_free(act_cc);
 }
 
+TEST(cl_dash_EP_should_result_in_called_for_preprocessing)
+{
+	struct args *orig = args_init_from_string("cl -c foo.c -E -P foo.i");
+	struct args *preprocessed, *compiler;
+
+	create_file("foo.c", "");
+	CHECK(!cc_process_args(orig, &preprocessed, &compiler));
+	CHECK_INT_EQ(3, stats_get_pending(STATS_PREPROCESSING));
+
+	args_free(orig);
+}
+
 TEST(CL_at_file_expension)
 {
 	create_file("foo.c", "//Cannot be empty");
@@ -706,6 +718,60 @@ TEST(CL_slash_Fo_with_quotes)
 	args_free(orig);
 	args_free(act_cpp);
 	args_free(act_cc);
+}
+
+TEST(CL_dash_M_should_be_unsupported)
+{
+	struct args *orig = args_init_from_string("cl -c foo.c -M");
+	struct args *preprocessed, *compiler;
+
+	create_file("foo.c", "");
+
+	CHECK(!cc_process_args(orig, &preprocessed, &compiler));
+	CHECK_INT_EQ(2, stats_get_pending(STATS_UNSUPPORTED_OPTION));
+
+	args_free(orig);
+}
+
+TEST(CL_dependency_slash_flags_should_only_be_sent_to_the_preprocessor)
+{
+#define CMD \
+	"cl /C /DA=1 /FIbar.h /Iinclude/Dir /UNDEBUG /u /X"
+	struct args *orig = args_init_from_string(CMD " -c foo.c -Fofoo.obj");
+	struct args *exp_cpp = args_init_from_string(CMD);
+#undef CMD
+	struct args *exp_cc = args_init_from_string("cl -c");
+	struct args *act_cpp = NULL, *act_cc = NULL;
+	create_file("foo.c", "");
+
+	conf->run_second_cpp = false;
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECK_ARGS_EQ_FREE12(exp_cpp, act_cpp);
+	CHECK_ARGS_EQ_FREE12(exp_cc, act_cc);
+
+	args_free(orig);
+}
+
+TEST(CL_dependency_dash_flags_should_only_be_sent_to_the_preprocessor)
+{
+#define CMDDASH \
+	"-C -DA=1 -FIbar.h -Iinclude/Dir -UNDEBUG -u -X"
+#define CMDSLASH \
+	"/C /DA=1 /FIbar.h /Iinclude/Dir /UNDEBUG /u /X"
+	struct args *orig =
+		args_init_from_string("cl " CMDDASH " -c foo.c -Fofoo.obj");
+	struct args *exp_cpp = args_init_from_string("cl " CMDSLASH);
+#undef CMD
+	struct args *exp_cc = args_init_from_string("cl -c");
+	struct args *act_cpp = NULL, *act_cc = NULL;
+	create_file("foo.c", "");
+
+	conf->run_second_cpp = false;
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECK_ARGS_EQ_FREE12(exp_cpp, act_cpp);
+	CHECK_ARGS_EQ_FREE12(exp_cc, act_cc);
+
+	args_free(orig);
 }
 
 TEST_SUITE_END

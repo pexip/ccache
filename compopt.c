@@ -86,17 +86,20 @@ static const struct compopt compopts[] = {
 
 // MSVC Specific options
 static const struct compopt compopts_msvc[] = {
-	{"/AI",             TAKES_ARG| TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/D",              AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
-	{"/E",              TOO_HARD},
-	{"/EP",             TOO_HARD},
-	{"/FI",       AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/FU",             AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/I",              AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/L",              TAKES_ARG},
-	{"/P",              TOO_HARD},
-	{"/U",              AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
-	{"/u",              AFFECTS_CPP},
+	{"/AI", TAKES_ARG| TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/C",  AFFECTS_CPP},
+	{"/D",  AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
+	{"/E",  TOO_HARD},
+	{"/EP", TOO_HARD},
+	{"/FI", AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/FU", AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/I",  AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/L",  TAKES_ARG},
+	{"/M",  TOO_HARD},
+	{"/P",  TOO_HARD},
+	{"/U",  AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
+	{"/X",  AFFECTS_CPP},
+	{"/u",  AFFECTS_CPP},
 };
 
 static int
@@ -120,18 +123,23 @@ find(const char *option)
 {
 	struct compopt key;
 	key.name = option;
+
 	if (option[0] == '-') {
 		return bsearch(
 			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
 			sizeof(compopts[0]),
 			compare_compopts);
-	} else {
+	}
+
+	if (option[0] == '/') {
 		return bsearch(
 			&key, compopts_msvc, sizeof(compopts_msvc) /
 			sizeof(compopts_msvc[0]),
 			sizeof(compopts[0]),
 			compare_compopts);
 	}
+
+	return NULL;
 }
 
 static const struct compopt *
@@ -139,16 +147,21 @@ find_prefix(const char *option)
 {
 	struct compopt key;
 	key.name = option;
+
 	if (option[0] == '-') {
 		return bsearch(
 			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
 			sizeof(compopts[0]), compare_prefix_compopts);
-	} else {
+	}
+
+	if (option[0] == '/') {
 		return bsearch(
 			&key, compopts_msvc, sizeof(compopts_msvc) /
 			sizeof(compopts_msvc[0]),
 			sizeof(compopts[0]), compare_prefix_compopts);
 	}
+
+	return NULL;
 }
 
 // Runs fn on the first two characters of option.

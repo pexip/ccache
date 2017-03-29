@@ -2401,6 +2401,11 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
+		// Switch all options of MSVC /form, to allow compopt search.
+		if (compiler_is_msvc(args) && argv[i][0] == '-') {
+			argv[i][0] = '/';
+		}
+
 		// These are always too hard.
 		if (compopt_too_hard(argv[i]) || str_startswith(argv[i], "-fdump-")) {
 			cc_log("Compiler option %s is unsupported", argv[i]);
@@ -2503,9 +2508,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// CL never have space.
-		if (compiler_is_msvc(args) &&
-		    (str_startswith(argv[i], "/Fo") ||
-		     str_startswith(argv[i], "-Fo"))) {
+		if (str_startswith(argv[i], "/Fo")) {
 			if (argv[i][3] == '"' && argv[i][strlen(argv[i])-1] == '"') {
 				argv[i][strlen(argv[i])-1] = '\0';
 				output_obj = make_relative_path(x_strdup(&argv[i][4]));
@@ -2532,7 +2535,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 
 		// Debugging is handled specially, so that we know if we can strip line
 		// number info.
-		if (str_startswith(argv[i], "-g") && !compiler_is_msvc(args)) {
+		if (str_startswith(argv[i], "-g")) {
 			generating_debuginfo = true;
 			args_add(stripped_args, argv[i]);
 			if (conf->unify && !str_eq(argv[i], "-g0")) {
@@ -2546,8 +2549,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		if ((str_startswith(argv[i], "-O") ||
-		     str_startswith(argv[i], "/O")) && compiler_is_msvc(args)) {
+		if (str_startswith(argv[i], "/O")) {
 			generating_debuginfo = true;
 			args_add(stripped_args, argv[i]);
 			continue;
@@ -2837,7 +2839,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		// Same as above but options with concatenated argument beginning with a
 		// slash.
 		if (argv[i][0] == '-' || (compiler_is_msvc(args) && argv[i][0] == '/')) {
-			char *slash_pos = strchr(argv[i]+1, '/');
+			char *slash_pos = strpbrk(argv[i]+1, "/\"'");
 			if (slash_pos) {
 				char *option = x_strndup(argv[i], slash_pos - argv[i]);
 				if (compopt_takes_concat_arg(option) && compopt_takes_path(option)) {
@@ -2880,13 +2882,9 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// Other options.
-		if (argv[i][0] == '-'
-#ifdef _WIN32
-		    || (compiler_is_msvc(args) && argv[i][0] == '/')
-#endif
-		    ) {
-			if (compopt_affects_cpp(argv[i]) ||
-			    compopt_prefix_affects_cpp(argv[i])) {
+		if (argv[i][0] == '-' || (compiler_is_msvc(args) && argv[i][0] == '/')) {
+			if (compopt_affects_cpp(argv[i])
+			    || compopt_prefix_affects_cpp(argv[i])) {
 				args_add(cpp_args, argv[i]);
 			} else {
 				args_add(stripped_args, argv[i]);
