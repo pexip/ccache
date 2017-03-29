@@ -34,40 +34,40 @@
 #define TO_STRING(x) STRINGIFY(x)
 
 static const char VERSION_TEXT[] =
-	MYNAME " version %s\n"
-	"\n"
-	"Copyright (C) 2002-2007 Andrew Tridgell\n"
-	"Copyright (C) 2009-2017 Joel Rosdahl\n"
-	"\n"
-	"This program is free software; you can redistribute it and/or modify it under\n"
-	"the terms of the GNU General Public License as published by the Free Software\n"
-	"Foundation; either version 3 of the License, or (at your option) any later\n"
-	"version.\n";
+  MYNAME " version %s\n"
+  "\n"
+  "Copyright (C) 2002-2007 Andrew Tridgell\n"
+  "Copyright (C) 2009-2017 Joel Rosdahl\n"
+  "\n"
+  "This program is free software; you can redistribute it and/or modify it under\n"
+  "the terms of the GNU General Public License as published by the Free Software\n"
+  "Foundation; either version 3 of the License, or (at your option) any later\n"
+  "version.\n";
 
 static const char USAGE_TEXT[] =
-	"Usage:\n"
-	"    " MYNAME " [options]\n"
-	"    " MYNAME " compiler [compiler options]\n"
-	"    compiler [compiler options]          (via symbolic link)\n"
-	"\n"
-	"Options:\n"
-	"    -c, --cleanup         delete old files and recalculate size counters\n"
-	"                          (normally not needed as this is done automatically)\n"
-	"    -C, --clear           clear the cache completely (except configuration)\n"
-	"    -F, --max-files=N     set maximum number of files in cache to N (use 0 for\n"
-	"                          no limit)\n"
-	"    -M, --max-size=SIZE   set maximum size of cache to SIZE (use 0 for no\n"
-	"                          limit); available suffixes: k, M, G, T (decimal) and\n"
-	"                          Ki, Mi, Gi, Ti (binary); default suffix: G\n"
-	"    -o, --set-config=K=V  set configuration key K to value V\n"
-	"    -p, --print-config    print current configuration options\n"
-	"    -s, --show-stats      show statistics summary\n"
-	"    -z, --zero-stats      zero statistics counters\n"
-	"\n"
-	"    -h, --help            print this help text\n"
-	"    -V, --version         print version and copyright information\n"
-	"\n"
-	"See also <https://ccache.samba.org>.\n";
+  "Usage:\n"
+  "    " MYNAME " [options]\n"
+  "    " MYNAME " compiler [compiler options]\n"
+  "    compiler [compiler options]          (via symbolic link)\n"
+  "\n"
+  "Options:\n"
+  "    -c, --cleanup         delete old files and recalculate size counters\n"
+  "                          (normally not needed as this is done automatically)\n"
+  "    -C, --clear           clear the cache completely (except configuration)\n"
+  "    -F, --max-files=N     set maximum number of files in cache to N (use 0 for\n"
+  "                          no limit)\n"
+  "    -M, --max-size=SIZE   set maximum size of cache to SIZE (use 0 for no\n"
+  "                          limit); available suffixes: k, M, G, T (decimal) and\n"
+  "                          Ki, Mi, Gi, Ti (binary); default suffix: G\n"
+  "    -o, --set-config=K=V  set configuration key K to value V\n"
+  "    -p, --print-config    print current configuration options\n"
+  "    -s, --show-stats      show statistics summary\n"
+  "    -z, --zero-stats      zero statistics counters\n"
+  "\n"
+  "    -h, --help            print this help text\n"
+  "    -V, --version         print version and copyright information\n"
+  "\n"
+  "See also <https://ccache.samba.org>.\n";
 
 // Global configuration data.
 struct conf *conf = NULL;
@@ -550,7 +550,7 @@ get_path_in_cache(const char *name, const char *suffix)
 	}
 
 	char *result =
-		format("%s/%s%s", path, name + conf->cache_dir_levels, suffix);
+	  format("%s/%s%s", path, name + conf->cache_dir_levels, suffix);
 	free(path);
 	return result;
 }
@@ -1068,7 +1068,7 @@ put_file_in_cache(const char *source, const char *dest)
 	}
 	if (!do_link) {
 		int ret = copy_file(
-			source, dest, conf->compression ? conf->compression_level : 0);
+		  source, dest, conf->compression ? conf->compression_level : 0);
 		if (ret != 0) {
 			cc_log("Failed to copy %s to %s: %s", source, dest, strerror(errno));
 			stats_update(STATS_ERROR);
@@ -1241,7 +1241,7 @@ to_cache(struct args *args)
 
 	cc_log("Running real compiler");
 	int status =
-		execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
+	  execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
 
 	if (compiler_is_msvc(args)) {
 		args_pop(args, 2);  // -Foooutput.obj input.c
@@ -1280,7 +1280,7 @@ to_cache(struct args *args)
 			}
 
 			int fd_result =
-				open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+			  open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
 			if (fd_result == -1) {
 				cc_log("Failed opening %s: %s", tmp_stderr, strerror(errno));
 				failed();
@@ -1353,7 +1353,7 @@ to_cache(struct args *args)
 		}
 
 		int fd_result =
-			open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+		  open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
 		if (fd_result == -1) {
 			cc_log("Failed opening %s: %s", tmp_stderr, strerror(errno));
 			failed();
@@ -1426,8 +1426,8 @@ to_cache(struct args *args)
 	}
 	if (st.st_size > 0) {
 		if (move_uncompressed_file(
-					tmp_stderr, cached_stderr,
-					conf->compression ? conf->compression_level : 0) != 0) {
+		      tmp_stderr, cached_stderr,
+		      conf->compression ? conf->compression_level : 0) != 0) {
 			cc_log("Failed to move %s to %s: %s", tmp_stderr, cached_stderr,
 			       strerror(errno));
 			stats_update(STATS_ERROR);
@@ -1612,7 +1612,8 @@ get_object_name_from_cpp(struct args *args, struct mdfour *hash)
 		}
 	} else {
 		hash_delimiter(hash, "cpp");
-		if (!process_preprocessed_file(hash, path_stdout, compiler_is_pump(args))) {
+		if (!process_preprocessed_file(hash, path_stdout,
+		                               compiler_is_pump(args))) {
 			stats_update(STATS_ERROR);
 			failed();
 		}
@@ -1691,7 +1692,7 @@ hash_compiler(struct mdfour *hash, struct stat *st, const char *path,
 		hash_file(hash, path);
 	} else { // command string
 		if (!hash_multicommand_output(
-					hash, conf->compiler_check, orig_args->argv[0])) {
+		      hash, conf->compiler_check, orig_args->argv[0])) {
 			fatal("Failure running compiler check command: %s", conf->compiler_check);
 		}
 	}
@@ -2087,7 +2088,7 @@ from_cache(enum fromcache_call_mode mode, bool put_object_in_manifest)
 
 	// (If mode != FROMCACHE_DIRECT_MODE, the dependency file is created by gcc.)
 	bool produce_dep_file =
-		generating_dependencies && mode == FROMCACHE_DIRECT_MODE;
+	  generating_dependencies && mode == FROMCACHE_DIRECT_MODE;
 
 	// If the dependency file should be in the cache, check that it is.
 	if (produce_dep_file && stat(cached_dep, &st) != 0) {
@@ -2508,7 +2509,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// CL /Fo: and (optional) space.
-		if (str_startswith(argv[i], "/Fo:")) {
+		if (compiler_is_msvc(args) && str_startswith(argv[i], "/Fo:")) {
 			if (strlen(argv[i]) > 4) {
 				output_obj = make_relative_path(x_strdup(&argv[i][4]));
 			} else {
@@ -2525,7 +2526,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// CL /Fo w/o space.
-		if (str_startswith(argv[i], "/Fo")) {
+		if (compiler_is_msvc(args) && str_startswith(argv[i], "/Fo")) {
 			if (argv[i][3] == '"' && argv[i][strlen(argv[i])-1] == '"') {
 				argv[i][strlen(argv[i])-1] = '\0';
 				output_obj = make_relative_path(x_strdup(&argv[i][4]));
@@ -2543,8 +2544,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 		if (str_startswith(argv[i], "-fdebug-prefix-map=")) {
 			debug_prefix_maps = x_realloc(
-				debug_prefix_maps,
-				(debug_prefix_maps_len + 1) * sizeof(char *));
+			  debug_prefix_maps,
+			  (debug_prefix_maps_len + 1) * sizeof(char *));
 			debug_prefix_maps[debug_prefix_maps_len++] = x_strdup(argv[i] + 19);
 			args_add(stripped_args, argv[i]);
 			continue;
@@ -2566,7 +2567,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		if (str_startswith(argv[i], "/O")) {
+		if (compiler_is_msvc(args) && str_startswith(argv[i], "/O")) {
 			generating_debuginfo = true;
 			args_add(stripped_args, argv[i]);
 			continue;
@@ -2854,23 +2855,26 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// Same as above but options with concatenated argument.
-		int arg_len = compopt_takes_concat_arg(argv[i]);
-		if (arg_len > 0) {
-			char *option = x_strndup(argv[i], arg_len);
-			if (compopt_takes_path(option)) {
-				char *relpath = make_relative_path(x_strdup(&argv[i][arg_len]));
-				char *new_option = format("%s%s", option, relpath);
-				if (compopt_affects_cpp(option)) {
-					args_add(cpp_args, new_option);
-				} else {
-					args_add(stripped_args, new_option);
+		if (argv[i][0] == '-' ||
+		    (argv[i][0] == '/' && compiler_is_msvc(args))) {
+			int arg_len = compopt_takes_concat_arg(argv[i]);
+			if (arg_len > 0) {
+				char *option = x_strndup(argv[i], arg_len);
+				if (compopt_takes_path(option)) {
+					char *relpath = make_relative_path(x_strdup(&argv[i][arg_len]));
+					char *new_option = format("%s%s", option, relpath);
+					if (compopt_affects_cpp(option)) {
+						args_add(cpp_args, new_option);
+					} else {
+						args_add(stripped_args, new_option);
+					}
+					free(new_option);
+					free(relpath);
+					free(option);
+					continue;
 				}
-				free(new_option);
-				free(relpath);
 				free(option);
-				continue;
 			}
-			free(option);
 		}
 
 		// Options that take an argument.
@@ -2894,15 +2898,28 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		// Other options.
-		if (argv[i][0] == '-' || (compiler_is_msvc(args) && argv[i][0] == '/')) {
-			if (compopt_affects_cpp(argv[i])
-			    || compopt_prefix_affects_cpp(argv[i])) {
+		// Other GNU options.
+		if (argv[i][0] == '-') {
+			if (compopt_affects_cpp(argv[i]) ||
+			    compopt_prefix_affects_cpp(argv[i])) {
 				args_add(cpp_args, argv[i]);
 			} else {
 				args_add(stripped_args, argv[i]);
 			}
 			continue;
+		}
+
+		// Other CL options.
+		if (argv[i][0] == '/' &&
+		    compiler_is_msvc(args)) {
+			if (compopt_affects_cpp(argv[i]) ||
+			    compopt_prefix_affects_cpp(argv[i])) {
+				args_add(cpp_args, argv[i]);
+				continue;
+			} else if (compopt_known(argv[i])) {
+				args_add(stripped_args, argv[i]);
+				continue;
+			}
 		}
 
 		// If an argument isn't a plain file then assume its an option, not an
@@ -2995,7 +3012,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	}
 
 	output_is_precompiled_header =
-		actual_language && strstr(actual_language, "-header");
+	  actual_language && strstr(actual_language, "-header");
 
 	if (output_is_precompiled_header
 	    && !(conf->sloppiness & SLOPPY_PCH_DEFINES)) {

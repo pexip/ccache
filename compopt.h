@@ -4,6 +4,7 @@
 #include "system.h"
 
 bool compopt_short(bool (*fn)(const char *option), const char *option);
+bool compopt_known(const char *option);
 bool compopt_affects_cpp(const char *option);
 bool compopt_too_hard(const char *option);
 bool compopt_too_hard_for_direct_mode(const char *option);

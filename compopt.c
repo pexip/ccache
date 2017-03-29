@@ -91,10 +91,10 @@ static const struct compopt compopts_msvc[] = {
 	{"/D",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
 	{"/E",    TOO_HARD},
 	{"/EP",   TOO_HARD},
+	{"/FI",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
 	{"/FR",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // extended.sbr
 	{"/FR:",  TAKES_ARG | TAKES_PATH},                    // extended.sbr
-	{"/FI",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
-	{"/FU",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},// #undef var
+	{"/FU",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG}, // #undef var
 	{"/Fa",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // assembly_listing.txt
 	{"/Fa:",  TAKES_ARG | TAKES_PATH},                    // assembly_listing.txt
 	{"/Fd",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // debug.pdb
@@ -144,17 +144,17 @@ find(const char *option)
 
 	if (option[0] == '-') {
 		return bsearch(
-			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
-			sizeof(compopts[0]),
-			compare_compopts);
+		         &key, compopts, sizeof(compopts) / sizeof(compopts[0]),
+		         sizeof(compopts[0]),
+		         compare_compopts);
 	}
 
 	if (option[0] == '/') {
 		return bsearch(
-			&key, compopts_msvc, sizeof(compopts_msvc) /
-			sizeof(compopts_msvc[0]),
-			sizeof(compopts[0]),
-			compare_compopts);
+		         &key, compopts_msvc, sizeof(compopts_msvc) /
+		         sizeof(compopts_msvc[0]),
+		         sizeof(compopts[0]),
+		         compare_compopts);
 	}
 
 	return NULL;
@@ -168,15 +168,15 @@ find_prefix(const char *option)
 
 	if (option[0] == '-') {
 		return bsearch(
-			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
-			sizeof(compopts[0]), compare_prefix_compopts);
+		         &key, compopts, sizeof(compopts) / sizeof(compopts[0]),
+		         sizeof(compopts[0]), compare_prefix_compopts);
 	}
 
 	if (option[0] == '/') {
 		return bsearch(
-			&key, compopts_msvc, sizeof(compopts_msvc) /
-			sizeof(compopts_msvc[0]),
-			sizeof(compopts[0]), compare_prefix_compopts);
+		         &key, compopts_msvc, sizeof(compopts_msvc) /
+		         sizeof(compopts_msvc[0]),
+		         sizeof(compopts[0]), compare_prefix_compopts);
 	}
 
 	return NULL;
@@ -206,6 +206,13 @@ compopt_verify_sortedness(void)
 		}
 	}
 	return true;
+}
+
+bool
+compopt_known(const char *option)
+{
+	const struct compopt *co = find(option);
+	return co && !(co->type & TOO_HARD);
 }
 
 bool
