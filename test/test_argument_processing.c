@@ -621,13 +621,13 @@ TEST(CL_at_file_expension)
 	char *current_working_dir = get_cwd();
 	char *file_string = format("%s/foo.c", current_working_dir);
 	create_file("file.jom", file_string);
-	free(file_string);
 	free(conf->base_dir);
 	conf->base_dir = x_strdup(current_working_dir);
 	struct args *orig = args_init_from_string("cl /c @file.jom");
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc), 
+		format("cwd=%s\n@file.jom=%s", current_working_dir, file_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("cl", act_cc->argv[0]);
 	CHECK_STR_EQ("-c", act_cc->argv[1]);
@@ -637,6 +637,7 @@ TEST(CL_at_file_expension)
 	CHECK_STR_EQ("foo.c", input_file);
 	CHECK_STR_EQ("foo.obj", output_obj);
 
+	free(file_string);
 	args_free(orig);
 	args_free(act_cpp);
 	args_free(act_cc);
