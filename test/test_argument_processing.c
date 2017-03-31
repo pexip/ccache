@@ -691,12 +691,59 @@ TEST(CL_slash_Fo)
 	args_free(act_cc);
 }
 
+TEST(CL_colon_Fo)
+{
+	create_file("foo.c", "//Not empty file");
+	char *current_working_dir = get_cwd();
+	free(conf->base_dir);
+	conf->base_dir = get_root();
+	char *arg_string = format("cl /Fo:%s/bar.obj /c %s/foo.c",
+	                          current_working_dir, current_working_dir);
+	struct args *orig = args_init_from_string(arg_string);
+	free(arg_string);
+	struct args *act_cpp = NULL, *act_cc = NULL;
+
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECK_INT_EQ(2, act_cc->argc);
+	CHECK_STR_EQ("-c",  act_cc->argv[1]);
+	CHECK_INT_EQ(1, act_cpp->argc);
+	CHECK_STR_EQ("foo.c", input_file);
+	CHECK_STR_EQ("./bar.obj", output_obj);
+
+	args_free(orig);
+	args_free(act_cpp);
+	args_free(act_cc);
+}
+
+TEST(CL_Fo_colon_dir)
+{
+	create_file("foo.c", "//Not empty file");
+	char *current_working_dir = get_cwd();
+	free(conf->base_dir);
+	conf->base_dir = get_root();
+	char *arg_string = format("cl /Fo:Objects/ /c %s/foo.c",
+	                          current_working_dir);
+	struct args *orig = args_init_from_string(arg_string);
+	free(arg_string);
+	struct args *act_cpp = NULL, *act_cc = NULL;
+
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECK_INT_EQ(2, act_cc->argc);
+	CHECK_STR_EQ("-c",  act_cc->argv[1]);
+	CHECK_INT_EQ(1, act_cpp->argc);
+	CHECK_STR_EQ("foo.c", input_file);
+	CHECK_STR_EQ("Objects/foo.obj", output_obj);
+
+	args_free(orig);
+	args_free(act_cpp);
+	args_free(act_cc);
+}
+
 TEST(CL_slash_Fo_with_quotes)
 {
 	create_dir("Src Dir");
 	create_dir("Obj Dir");
 	create_file("Src Dir/foo.c", "//Not empty file");
-	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
 	char *arg_string = format("cl /Fo\"Obj Dir/\" /c \"Src Dir/foo.c\"");

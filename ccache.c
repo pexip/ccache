@@ -2521,8 +2521,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 				}
 				output_obj = make_relative_path(x_strdup(argv[i+1]));
 				i++;
-				continue;
 			}
+			continue;
 		}
 
 		// CL /Fo w/o space.
