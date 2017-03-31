@@ -107,7 +107,8 @@ TEST(dash_xxx_doesnt_take_arg)
 
 TEST(dash_iframework_prefix_affects_cpp)
 {
-	CHECK(compopt_prefix_affects_cpp("-iframework"));
+	CHECK(compopt_prefix_affects_cpp("-iframework."));
+	CHECK(compopt_prefix_affects_cpp("-iframework/usr/local/something"));
 }
 
 TEST_SUITE_END

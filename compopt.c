@@ -254,8 +254,12 @@ int
 compopt_takes_concat_arg(const char *option)
 {
 	const struct compopt *co = find_prefix(option);
-	return (co && (co->type & TAKES_CONCAT_ARG))
-	       ? (int)strlen(co->name) : 0;
+	if (!co || !(co->type & TAKES_CONCAT_ARG)) {
+		return 0;
+	}
+	int len = (int)strlen(co->name);
+	return (co->type & TAKES_PATH) && is_full_path(option+len)
+	       ? len : 0;
 }
 
 // Determines if the prefix of the option matches any option and affects the
@@ -265,5 +269,13 @@ compopt_prefix_affects_cpp(const char *option)
 {
 	// Prefix options have to take concatentated args.
 	const struct compopt *co = find_prefix(option);
-	return co && (co->type & TAKES_CONCAT_ARG) && (co->type & AFFECTS_CPP);
+	if (!co || !(co->type & TAKES_CONCAT_ARG) || !(co->type & AFFECTS_CPP)) {
+		return false;
+	}
+	int len = (int)strlen(co->name);
+	if (co->type & TAKES_PATH) {
+		return strchr(option+len, '.') || is_full_path(option+len);
+	} else {
+		return !strchr(option+len, '.') && !is_full_path(option+len);
+	}
 }
