@@ -822,6 +822,28 @@ TEST(CL_dependency_dash_flags_should_only_be_sent_to_the_preprocessor)
 	args_free(orig);
 }
 
+TEST(CL_full_path_with_slash_U)
+{
+	struct args *orig = args_init_from_string(
+	  "cl /c foo.c "
+	  "/UNDEBUG "
+	  "/Users/home/my/foo.c "
+	);
+
+	struct args *act_cpp = NULL, *act_cc = NULL;
+	create_file("foo.c", "");
+
+	conf->run_second_cpp = false;
+	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECK_INT_EQ(3, act_cpp->argc);
+	CHECK_STR_EQ("/Users/home/my/foo.c", act_cpp->argv[1]);
+	CHECK_STR_EQ("/UNDEBUG", act_cpp->argv[2]);
+	CHECK_INT_EQ(3, act_cc->argc);
+	CHECK_STR_EQ("/Users/home/my/foo.c", act_cc->argv[1]);
+	CHECK_STR_EQ("-c", act_cc->argv[2]);
+	args_free(orig);
+}
+
 TEST(CL_output_filenames)
 {
 	struct args *orig =
