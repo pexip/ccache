@@ -1280,7 +1280,7 @@ to_cache(struct args *args)
 			}
 
 			int fd_result =
-			  open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+				open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
 			if (fd_result == -1) {
 				cc_log("Failed opening %s: %s", tmp_stderr, strerror(errno));
 				failed();
@@ -1612,8 +1612,7 @@ get_object_name_from_cpp(struct args *args, struct mdfour *hash)
 		}
 	} else {
 		hash_delimiter(hash, "cpp");
-		if (!process_preprocessed_file(hash, path_stdout,
-		                               compiler_is_pump(args))) {
+		if (!process_preprocessed_file(hash, path_stdout, compiler_is_pump(args))) {
 			stats_update(STATS_ERROR);
 			failed();
 		}
@@ -2544,8 +2543,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 		if (str_startswith(argv[i], "-fdebug-prefix-map=")) {
 			debug_prefix_maps = x_realloc(
-			  debug_prefix_maps,
-			  (debug_prefix_maps_len + 1) * sizeof(char *));
+				debug_prefix_maps,
+				(debug_prefix_maps_len + 1) * sizeof(char *));
 			debug_prefix_maps[debug_prefix_maps_len++] = x_strdup(argv[i] + 19);
 			args_add(stripped_args, argv[i]);
 			continue;
@@ -3106,13 +3105,20 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	}
 
 	// Cope with -FoDebug/ directory name
-	if (input_file
-	    && compiler_is_msvc(args)
-	    && output_obj
-	    && (str_endswith(output_obj, "/") || str_endswith(output_obj, "\\"))) {
+	if (input_file &&
+	    compiler_is_msvc(args) &&
+	    output_obj &&
+	    (str_eq(output_obj, ".") ||
+	     str_eq(output_obj, "..") ||
+	     str_endswith(output_obj, "/") ||
+	     str_endswith(output_obj, "\\"))) {
 		char *base = basename(input_file);
 		char *next = remove_extension(base);
-		reformat(&output_obj, "%s%s.obj", output_obj, next);
+		if (str_endswith(output_obj, ".")) {
+			reformat(&output_obj, "%s/%s.obj", output_obj, next);
+		} else {
+			reformat(&output_obj, "%s%s.obj", output_obj, next);
+		}
 		free(next);
 		free(base);
 	}

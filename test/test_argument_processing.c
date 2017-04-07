@@ -182,35 +182,35 @@ TEST(make_relative_path)
 	current_working_dir = get_cwd();
 
 	CHECK_STR_EQ_FREE2("./foo.c",
-	                   make_relative_path(format("%s/%s", current_working_dir,
-	                                             "foo.c")));
+										 make_relative_path(format("%s/%s", current_working_dir,
+																							 "foo.c")));
 
 	char *dir = format("%s/a/b/c/foo.c", current_working_dir);
 	create_parent_dirs(dir);
 	CHECK_STR_EQ_FREE2("a/foo.c",
-	                   make_relative_path(format("%s/a/foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s/a/foo.c",
+																							 current_working_dir)));
 	CHECK_STR_EQ_FREE2("a/b/foo.c",
-	                   make_relative_path(format("%s/a/b/foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s/a/b/foo.c",
+																							 current_working_dir)));
 	CHECK_STR_EQ_FREE2("a/b/c/foo.c",
-	                   make_relative_path(format("%s/a/b/c/foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s/a/b/c/foo.c",
+																							 current_working_dir)));
 	CHECK_STR_EQ_FREE12(format("%s/a/b/c/d/foo.c", current_working_dir),
-	                    make_relative_path(format("%s/a/b/c/d/foo.c",
-	                                              current_working_dir)));
+											make_relative_path(format("%s/a/b/c/d/foo.c",
+																								current_working_dir)));
 
 #ifdef _WIN32
 	// Mixed / and \\ char
 	CHECK_STR_EQ_FREE2("a/foo.c",
-	                   make_relative_path(format("%s\\a\\foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s\\a\\foo.c",
+																							 current_working_dir)));
 	CHECK_STR_EQ_FREE2("a/b/foo.c",
-	                   make_relative_path(format("%s\\a/b\\foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s\\a/b\\foo.c",
+																							 current_working_dir)));
 	CHECK_STR_EQ_FREE2("a/b/c/foo.c",
-	                   make_relative_path(format("%s/a\\b\\c/foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s/a\\b\\c/foo.c",
+																							 current_working_dir)));
 
 	// All \\ case
 	for (char *p = current_working_dir; *p; ++p) {
@@ -219,8 +219,8 @@ TEST(make_relative_path)
 		}
 	}
 	CHECK_STR_EQ_FREE2("a/foo.c",
-	                   make_relative_path(format("%s\\a\\foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s\\a\\foo.c",
+																							 current_working_dir)));
 	// All / case
 	for (char *p = current_working_dir; *p; ++p) {
 		if (*p == '\\') {
@@ -228,8 +228,8 @@ TEST(make_relative_path)
 		}
 	}
 	CHECK_STR_EQ_FREE2("a/b/foo.c",
-	                   make_relative_path(format("%s/a/b/foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s/a/b/foo.c",
+																							 current_working_dir)));
 	// Mixed / and \\ case
 	int count = 0;
 	for (char *p = current_working_dir; *p; ++p) {
@@ -238,8 +238,8 @@ TEST(make_relative_path)
 		}
 	}
 	CHECK_STR_EQ_FREE2("a/b/c/foo.c",
-	                   make_relative_path(format("%s/a\\b/c\\foo.c",
-	                                             current_working_dir)));
+										 make_relative_path(format("%s/a\\b/c\\foo.c",
+																							 current_working_dir)));
 #endif
 	free(dir);
 }
@@ -627,7 +627,7 @@ TEST(CL_at_file_expension)
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
 	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
-	       format("cwd=%s\n@file.jom=%s", current_working_dir, file_string));
+				 format("cwd=%s\n@file.jom=%s", current_working_dir, file_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("cl", act_cc->argv[0]);
 	CHECK_STR_EQ("-c", act_cc->argv[1]);
@@ -650,12 +650,12 @@ TEST(CL_dash_Fo)
 	free(conf->base_dir);
 	conf->base_dir = get_root();
 	char *arg_string = format("cl -Fo%s/bar.obj -c %s/foo.c",
-	                          current_working_dir, current_working_dir);
+														current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
 	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
-	       format("args=%s", arg_string));
+				 format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
@@ -675,12 +675,12 @@ TEST(CL_slash_Fo)
 	free(conf->base_dir);
 	conf->base_dir = get_root();
 	char *arg_string = format("cl /Fo%s/bar.obj /c %s/foo.c",
-	                          current_working_dir, current_working_dir);
+														current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
 	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
-	       format("args=%s", arg_string));
+				 format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
@@ -693,19 +693,44 @@ TEST(CL_slash_Fo)
 	args_free(act_cc);
 }
 
-TEST(CL_colon_Fo)
+TEST(CL_slash_Fo_pwd)
+{
+	create_file("foo.c", "//Not empty file");
+	char *current_working_dir = get_cwd();
+	free(conf->base_dir);
+	conf->base_dir = get_root();
+	char *arg_string = format("cl /Fo%s\\ /c %s\\foo.c",
+														current_working_dir, current_working_dir);
+	struct args *orig = args_init_from_string(arg_string);
+	struct args *act_cpp = NULL, *act_cc = NULL;
+
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+				 format("args=%s", arg_string));
+	CHECK_INT_EQ(2, act_cc->argc);
+	CHECK_STR_EQ("-c",  act_cc->argv[1]);
+	CHECK_INT_EQ(1, act_cpp->argc);
+	CHECK_STR_EQ("foo.c", input_file);
+	CHECK_STR_EQ("./foo.obj", output_obj);
+
+	free(arg_string);
+	args_free(orig);
+	args_free(act_cpp);
+	args_free(act_cc);
+}
+
+TEST(CL_slash_Fo_colon)
 {
 	create_file("foo.c", "//Not empty file");
 	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
 	char *arg_string = format("cl /Fo:%s/bar.obj /c %s/foo.c",
-	                          current_working_dir, current_working_dir);
+														current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
 	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
-	       format("args=%s", arg_string));
+				 format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
@@ -718,19 +743,44 @@ TEST(CL_colon_Fo)
 	args_free(act_cc);
 }
 
-TEST(CL_Fo_colon_dir)
+TEST(CL_slash_Fo_colon_pwd)
+{
+	create_file("foo.c", "//Not empty file");
+	char *current_working_dir = get_cwd();
+	free(conf->base_dir);
+	conf->base_dir = get_root();
+	char *arg_string = format("cl /Fo:%s\\ /c %s\\foo.c",
+														current_working_dir, current_working_dir);
+	struct args *orig = args_init_from_string(arg_string);
+	struct args *act_cpp = NULL, *act_cc = NULL;
+
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+				 format("args=%s", arg_string));
+	CHECK_INT_EQ(2, act_cc->argc);
+	CHECK_STR_EQ("-c",  act_cc->argv[1]);
+	CHECK_INT_EQ(1, act_cpp->argc);
+	CHECK_STR_EQ("foo.c", input_file);
+	CHECK_STR_EQ("./foo.obj", output_obj);
+
+	free(arg_string);
+	args_free(orig);
+	args_free(act_cpp);
+	args_free(act_cc);
+}
+
+TEST(CL_slash_Fo_colon_local_dir)
 {
 	create_file("foo.c", "//Not empty file");
 	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
 	char *arg_string = format("cl /Fo:Objects/ /c %s/foo.c",
-	                          current_working_dir);
+														current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
 	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
-	       format("args=%s", arg_string));
+				 format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
@@ -760,7 +810,7 @@ TEST(CL_slash_Fo_with_quotes)
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
 	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
-	       format("args=%s", arg_string));
+				 format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
@@ -853,24 +903,24 @@ TEST(CL_output_filenames)
 {
 	struct args *orig =
 		args_init_from_string("cl -c foo.c "
-		                      "/Faassembly_listing.txt "
-		                      "/Fddebug.pdb "
-		                      "/Fefoo.exe "
-		                      "/Fifoo.i "
-		                      "/Fmmap.txt "
-		                      "/Fofoo.obj "
-		                      "/Fpheaders.pch "
-		                      "/Frsource_browser.sbr "
-		                      "/FRextended.sbr "
-		                      "/Fa: assembly_listing.txt "
-		                      "/Fd: debug.pdb "
-		                      "/Fe: foo.exe "
-		                      "/Fi: foo.i "
-		                      "/Fm: map.txt "
-		                      "/Fo: foo.obj "
-		                      "/Fp: headers.pch "
-		                      "/Fr: source_browser.sbr "
-		                      "/FR: extended.sbr ");
+													"/Faassembly_listing.txt "
+													"/Fddebug.pdb "
+													"/Fefoo.exe "
+													"/Fifoo.i "
+													"/Fmmap.txt "
+													"/Fofoo.obj "
+													"/Fpheaders.pch "
+													"/Frsource_browser.sbr "
+													"/FRextended.sbr "
+													"/Fa: assembly_listing.txt "
+													"/Fd: debug.pdb "
+													"/Fe: foo.exe "
+													"/Fi: foo.i "
+													"/Fm: map.txt "
+													"/Fo: foo.obj "
+													"/Fp: headers.pch "
+													"/Fr: source_browser.sbr "
+													"/FR: extended.sbr ");
 
 	struct args *act_cpp = NULL, *act_cc = NULL;
 	create_file("foo.c", "");
