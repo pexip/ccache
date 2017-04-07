@@ -699,7 +699,7 @@ TEST(CL_slash_Fo_pwd)
 	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
-	char *arg_string = format("cl /Fo%s\\ /c %s\\foo.c",
+	char *arg_string = format("cl /Fo%s/ /c %s/foo.c",
 														current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
@@ -749,7 +749,7 @@ TEST(CL_slash_Fo_colon_pwd)
 	char *current_working_dir = get_cwd();
 	free(conf->base_dir);
 	conf->base_dir = get_root();
-	char *arg_string = format("cl /Fo:%s\\ /c %s\\foo.c",
+	char *arg_string = format("cl /Fo:%s/ /c %s/foo.c",
 														current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
