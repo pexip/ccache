@@ -773,9 +773,9 @@ TEST(CL_slash_Fo_with_quotes)
 	args_free(act_cc);
 }
 
-TEST(CL_dash_M_should_be_unsupported)
+TEST(CL_dash_P_should_be_unsupported)
 {
-	struct args *orig = args_init_from_string("cl -c foo.c -M");
+	struct args *orig = args_init_from_string("cl -c foo.c -P");
 	struct args *preprocessed, *compiler;
 
 	create_file("foo.c", "");

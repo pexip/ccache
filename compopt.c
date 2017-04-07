@@ -86,14 +86,18 @@ static const struct compopt compopts[] = {
 
 // MSVC Specific options
 static const struct compopt compopts_msvc[] = {
-	{"/AI",   TAKES_ARG| TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/AI",   AFFECTS_CPP | TAKES_ARG| TAKES_CONCAT_ARG | TAKES_PATH},
 	{"/C",    AFFECTS_CPP},
 	{"/D",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
 	{"/E",    TOO_HARD},
+	{"/EH",   TAKES_CONCAT_ARG},
 	{"/EP",   TOO_HARD},
+	{"/FA",   TAKES_CONCAT_ARG},
+	{"/FC",   0},
 	{"/FI",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
 	{"/FR",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // extended.sbr
 	{"/FR:",  TAKES_ARG | TAKES_PATH},                    // extended.sbr
+	{"/FS",   0},
 	{"/FU",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG}, // #undef var
 	{"/Fa",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // assembly_listing.txt
 	{"/Fa:",  TAKES_ARG | TAKES_PATH},                    // assembly_listing.txt
@@ -111,13 +115,104 @@ static const struct compopt compopts_msvc[] = {
 	{"/Fp:",  TAKES_ARG | TAKES_PATH},                    // headers.pch
 	{"/Fr",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // source_browser.sbr
 	{"/Fr:",  TAKES_ARG | TAKES_PATH},                    // source_browser.sbr
+	{"/GA",   0},
+	{"/GF",   0},
+	{"/GH",   0},
+	{"/GL",   0},
+	{"/GL-",  0},
+	{"/GR",   0},
+	{"/GR-",  0},
+	{"/GS",   0},
+	{"/GS-",  0},
+	{"/GT",   0},
+	{"/GX",   0},
+	{"/GX-",  0},
+	{"/GZ",   0},
+	{"/Ge",   0},
+	{"/Gh",   0},
+	{"/Gm",   0},
+	{"/Gm-",  0},
+	{"/Gs",   TAKES_CONCAT_ARG},
+	{"/Gv",   0},
+	{"/Gw",   0},
+	{"/Gw-",  0},
+	{"/Gy",   0},
+	{"/Gy-",  0},
+	{"/H",    TAKES_CONCAT_ARG},
 	{"/I",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/J",    0},
 	{"/L",    TAKES_ARG},
-	{"/M",    TOO_HARD},
+	{"/MD",   0},
+	{"/MDd",  0},
+	{"/MP",   TAKES_CONCAT_ARG},
+	{"/MT",   0},
+	{"/MTd",  0},
+	{"/O",    TAKES_CONCAT_ARG},
 	{"/P",    TOO_HARD},
+	{"/Qfast_transcendentals", 0},
+	{"/Qpar", 0},
+	{"/Qpar-", TAKES_CONCAT_ARG},
+	{"/RTC",  TAKES_CONCAT_ARG},
+	{"/TC",   0},
+	{"/TP",   0},
+	{"/Tc",   TAKES_CONCAT_ARG},
+	{"/Tp",   TAKES_CONCAT_ARG},
 	{"/U",    AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},
+	{"/V",    TAKES_CONCAT_ARG},
+	{"/W",    TAKES_CONCAT_ARG},
+	{"/WL",   0},
+	{"/WX",   0},
+	{"/Wall", 0},
+	{"/Wv:",  TAKES_CONCAT_ARG},
 	{"/X",    AFFECTS_CPP},
+	{"/Yc",   TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/Yd",   0},
+	{"/Yl",   TAKES_CONCAT_ARG},
+	{"/Yu",   TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/Z7",   0},
+	{"/ZH:",  TAKES_CONCAT_ARG},
+	{"/ZI",   0},
+	{"/ZW",   0},
+	{"/Za",   0},
+	{"/Zc:",  TAKES_CONCAT_ARG},
+	{"/Zi",   0},
+	{"/Zl",   0},
+	{"/Zm",   TAKES_CONCAT_ARG},
+	{"/Zo",   0},
+	{"/Zo-",  0},
+	{"/Zp",   TAKES_CONCAT_ARG},
+	{"/Zs",   0},
+	{"/arch:", TAKES_CONCAT_ARG},
+	{"/await", 0},
+	{"/bigobj", 0},
+	{"/clr",  0},
+	{"/clr:", TAKES_CONCAT_ARG},
+	{"/constexpr:", TAKES_CONCAT_ARG},
+	{"/doc",  TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // .xdc
+	{"/doc:", TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
+	{"/errorReport:", TAKES_CONCAT_ARG},
+	{"/execution-charset:", TAKES_CONCAT_ARG},
+	{"/favor:", TAKES_CONCAT_ARG},
+	{"/fp:",  TAKES_CONCAT_ARG},
+	{"/guard:cf", 0},
+	{"/guard:cf-", 0},
+	{"/homeparams", 0},
+	{"/nologo", 0},
+	{"/openmp", 0},
+	{"/sdl",  0},
+	{"/showIncludes", TOO_HARD},
+	{"/source-charset:", TAKES_CONCAT_ARG},
 	{"/u",    AFFECTS_CPP},
+	{"/utf-8", 0},
+	{"/validate-charset", 0},
+	{"/validate-charset-", 0},
+	{"/vd",   TAKES_CONCAT_ARG},
+	{"/vm",   TAKES_CONCAT_ARG},
+	{"/volatile:", TAKES_CONCAT_ARG},
+	{"/w",    TAKES_CONCAT_ARG},
+	{"/wd",   TAKES_CONCAT_ARG},
+	{"/we",   TAKES_CONCAT_ARG},
+	{"/wo",   TAKES_CONCAT_ARG},
 };
 
 static int
@@ -144,17 +239,17 @@ find(const char *option)
 
 	if (option[0] == '-') {
 		return bsearch(
-		         &key, compopts, sizeof(compopts) / sizeof(compopts[0]),
-		         sizeof(compopts[0]),
-		         compare_compopts);
+			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
+			sizeof(compopts[0]),
+			compare_compopts);
 	}
 
 	if (option[0] == '/') {
 		return bsearch(
-		         &key, compopts_msvc, sizeof(compopts_msvc) /
-		         sizeof(compopts_msvc[0]),
-		         sizeof(compopts[0]),
-		         compare_compopts);
+			&key, compopts_msvc, sizeof(compopts_msvc) /
+			sizeof(compopts_msvc[0]),
+			sizeof(compopts[0]),
+			compare_compopts);
 	}
 
 	return NULL;
@@ -168,15 +263,15 @@ find_prefix(const char *option)
 
 	if (option[0] == '-') {
 		return bsearch(
-		         &key, compopts, sizeof(compopts) / sizeof(compopts[0]),
-		         sizeof(compopts[0]), compare_prefix_compopts);
+			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
+			sizeof(compopts[0]), compare_prefix_compopts);
 	}
 
 	if (option[0] == '/') {
 		return bsearch(
-		         &key, compopts_msvc, sizeof(compopts_msvc) /
-		         sizeof(compopts_msvc[0]),
-		         sizeof(compopts[0]), compare_prefix_compopts);
+			&key, compopts_msvc, sizeof(compopts_msvc) /
+			sizeof(compopts_msvc[0]),
+			sizeof(compopts[0]), compare_prefix_compopts);
 	}
 
 	return NULL;
@@ -202,6 +297,15 @@ compopt_verify_sortedness(void)
 			        "compopt_verify_sortedness: %s >= %s\n",
 			        compopts[i-1].name,
 			        compopts[i].name);
+			return false;
+		}
+	}
+	for (size_t i = 1; i < sizeof(compopts_msvc)/sizeof(compopts_msvc[0]); i++) {
+		if (strcmp(compopts_msvc[i-1].name, compopts_msvc[i].name) >= 0) {
+			fprintf(stderr,
+			        "compopt_verify_sortedness: %s >= %s\n",
+			        compopts_msvc[i-1].name,
+			        compopts_msvc[i].name);
 			return false;
 		}
 	}
