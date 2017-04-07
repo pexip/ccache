@@ -29,7 +29,7 @@ get_root(void)
 #ifndef _WIN32
 	return x_strdup("/");
 #else
-	char volume[4]; // "C:\"
+	char volume[4];   // "C:\"
 	GetVolumePathName(get_cwd(), volume, sizeof(volume));
 	return x_strdup(volume);
 #endif
@@ -514,7 +514,7 @@ TEST(isystem_flag_with_concat_arg_should_be_rewritten_if_basedir_is_used)
 
 	create_file("foo.c", "");
 	free(conf->base_dir);
-	conf->base_dir = get_root(); // posix
+	conf->base_dir = get_root();   // posix
 	current_working_dir = get_cwd();
 	// Windows path doesn't work concatenated.
 	cwd = get_posix_path(current_working_dir);
@@ -626,8 +626,8 @@ TEST(CL_at_file_expension)
 	struct args *orig = args_init_from_string("cl /c @file.jom");
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECKM(cc_process_args(orig, &act_cpp, &act_cc), 
-		format("cwd=%s\n@file.jom=%s", current_working_dir, file_string));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+	       format("cwd=%s\n@file.jom=%s", current_working_dir, file_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("cl", act_cc->argv[0]);
 	CHECK_STR_EQ("-c", act_cc->argv[1]);
@@ -654,7 +654,8 @@ TEST(CL_dash_Fo)
 	struct args *orig = args_init_from_string(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+	       format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
@@ -676,16 +677,17 @@ TEST(CL_slash_Fo)
 	char *arg_string = format("cl /Fo%s/bar.obj /c %s/foo.c",
 	                          current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
-	free(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+	       format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
 	CHECK_STR_EQ("foo.c", input_file);
 	CHECK_STR_EQ("./bar.obj", output_obj);
 
+	free(arg_string);
 	args_free(orig);
 	args_free(act_cpp);
 	args_free(act_cc);
@@ -700,16 +702,17 @@ TEST(CL_colon_Fo)
 	char *arg_string = format("cl /Fo:%s/bar.obj /c %s/foo.c",
 	                          current_working_dir, current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
-	free(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+	       format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
 	CHECK_STR_EQ("foo.c", input_file);
 	CHECK_STR_EQ("./bar.obj", output_obj);
 
+	free(arg_string);
 	args_free(orig);
 	args_free(act_cpp);
 	args_free(act_cc);
@@ -724,16 +727,17 @@ TEST(CL_Fo_colon_dir)
 	char *arg_string = format("cl /Fo:Objects/ /c %s/foo.c",
 	                          current_working_dir);
 	struct args *orig = args_init_from_string(arg_string);
-	free(arg_string);
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+	       format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
 	CHECK_STR_EQ("foo.c", input_file);
 	CHECK_STR_EQ("Objects/foo.obj", output_obj);
 
+	free(arg_string);
 	args_free(orig);
 	args_free(act_cpp);
 	args_free(act_cc);
@@ -748,7 +752,6 @@ TEST(CL_slash_Fo_with_quotes)
 	conf->base_dir = get_root();
 	char *arg_string = format("cl /Fo\"Obj Dir/\" /c \"Src Dir/foo.c\"");
 	struct args *orig = args_init_from_string(arg_string);
-	free(arg_string);
 
 	CHECK_INT_EQ(4, orig->argc);
 	CHECK_STR_EQ("/Fo\"Obj Dir/\"", orig->argv[1]);
@@ -756,13 +759,15 @@ TEST(CL_slash_Fo_with_quotes)
 
 	struct args *act_cpp = NULL, *act_cc = NULL;
 
-	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
+	CHECKM(cc_process_args(orig, &act_cpp, &act_cc),
+	       format("args=%s", arg_string));
 	CHECK_INT_EQ(2, act_cc->argc);
 	CHECK_STR_EQ("-c",  act_cc->argv[1]);
 	CHECK_INT_EQ(1, act_cpp->argc);
 	CHECK_STR_EQ("Src Dir/foo.c", input_file);
 	CHECK_STR_EQ("Obj Dir/foo.obj", output_obj);
 
+	free(arg_string);
 	args_free(orig);
 	args_free(act_cpp);
 	args_free(act_cc);
@@ -825,10 +830,10 @@ TEST(CL_dependency_dash_flags_should_only_be_sent_to_the_preprocessor)
 TEST(CL_full_path_with_slash_U)
 {
 	struct args *orig = args_init_from_string(
-	  "cl /c foo.c "
-	  "/UNDEBUG "
-	  "/Users/home/my/foo.c "
-	);
+		"cl /c foo.c "
+		"/UNDEBUG "
+		"/Users/home/my/foo.c "
+		);
 
 	struct args *act_cpp = NULL, *act_cc = NULL;
 	create_file("foo.c", "");
@@ -873,12 +878,12 @@ TEST(CL_output_filenames)
 	conf->run_second_cpp = false;
 	CHECK(cc_process_args(orig, &act_cpp, &act_cc));
 
-	CHECK_INT_EQ(1 + 3*8, act_cpp->argc); // cl ...
+	CHECK_INT_EQ(1 + 3*8, act_cpp->argc);   // cl ...
 	CHECK_STR_EQ("/Faassembly_listing.txt", act_cpp->argv[1]);
 	CHECK_STR_EQ("/Fddebug.pdb", act_cpp->argv[2]);
 	CHECK_STR_EQ("extended.sbr", act_cpp->argv[24]);
 
-	CHECK_INT_EQ(2 + 3*8, act_cc->argc);  // cl ... -c
+	CHECK_INT_EQ(2 + 3*8, act_cc->argc);    // cl ... -c
 	CHECK_STR_EQ("/Faassembly_listing.txt", act_cc->argv[1]);
 	CHECK_STR_EQ("extended.sbr", act_cc->argv[24]);
 	CHECK_STR_EQ("-c", act_cc->argv[25]);
