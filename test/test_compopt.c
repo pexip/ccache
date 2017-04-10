@@ -24,89 +24,106 @@ TEST_SUITE(compopt)
 
 TEST(option_table_should_be_sorted)
 {
+	set_compiler("gcc");
 	bool compopt_verify_sortedness();
 	CHECK(compopt_verify_sortedness());
 }
 
 TEST(dash_I_affects_cpp)
 {
+	set_compiler("gcc");
 	CHECK(compopt_affects_cpp("-I"));
 	CHECK(!compopt_affects_cpp("-Ifoo"));
 }
 
 TEST(compopt_short)
 {
+	set_compiler("gcc");
 	CHECK(compopt_short(compopt_affects_cpp, "-Ifoo"));
 	CHECK(!compopt_short(compopt_affects_cpp, "-include"));
 }
 
 TEST(dash_V_doesnt_affect_cpp)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_affects_cpp("-V"));
 }
 
 TEST(dash_doesnexist_doesnt_affect_cpp)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_affects_cpp("-doesntexist"));
 }
 
 TEST(dash_MM_too_hard)
 {
+	set_compiler("gcc");
 	CHECK(compopt_too_hard("-MM"));
 }
 
 TEST(dash_MD_not_too_hard)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_too_hard("-MD"));
 }
 
 TEST(dash_fprofile_arcs_not_too_hard)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_too_hard("-fprofile-arcs"));
 }
 
 TEST(dash_ftest_coverage_not_too_hard)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_too_hard("-ftest-coverage"));
 }
 
 TEST(dash_fstack_usage_not_too_hard)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_too_hard("-fstack-usage"));
 }
 
 TEST(dash_doesnexist_not_too_hard)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_too_hard("-doesntexist"));
 }
 
 TEST(dash_Xpreprocessor_too_hard_for_direct_mode)
 {
+	set_compiler("gcc");
 	CHECK(compopt_too_hard_for_direct_mode("-Xpreprocessor"));
 }
 
 TEST(dash_nostdinc_not_too_hard_for_direct_mode)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_too_hard_for_direct_mode("-nostdinc"));
 }
 
 TEST(dash_I_takes_path)
 {
+	set_compiler("gcc");
 	CHECK(compopt_takes_path("-I"));
 }
 
 TEST(dash_Xlinker_takes_arg)
 {
+	set_compiler("gcc");
 	CHECK(compopt_takes_arg("-Xlinker"));
 }
 
 TEST(dash_xxx_doesnt_take_arg)
 {
+	set_compiler("gcc");
 	CHECK(!compopt_takes_arg("-xxx"));
 }
 
 TEST(dash_iframework_prefix_affects_cpp)
 {
+	set_compiler("gcc");
 	CHECK(compopt_prefix_affects_cpp("-iframework."));
 	CHECK(compopt_prefix_affects_cpp("-iframework/usr/local/something"));
 }

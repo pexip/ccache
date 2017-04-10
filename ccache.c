@@ -247,41 +247,56 @@ static pid_t compiler_pid = 0;
 
 // Note that these compiler checks are unreliable, so nothing should
 // hard-depend on them.
+enum Compiler compiler = COMPILER_UNKNOWN;
 
-static bool
-compiler_is_clang(struct args *args)
+// Auto-detect type of compiler for argv[0] value.
+// If we need more secure testing (like parsing --version results)
+// this should go in there.
+// Note this is executed just once, when ccache starts.
+void set_compiler(const char* fullPath)
 {
-	char *name = basename(args->argv[0]);
-	bool result = strstr(name, "clang") != NULL;
+	char *name = basename(fullPath);
+	if (strstr(name, "gcc") || strstr(name, "g++")) {
+		cc_log("Detected GCC compiler.");
+		compiler = COMPILER_GCC;
+	} else if (strstr(name, "clang")) {
+		cc_log("Detected GLANG compiler.");
+		compiler = COMPILER_CLANG;
+	} else if (path_eq(name, "cl") || path_eq(name, "cl.exe")) {
+		cc_log("Detected VISUAL compiler.");
+		compiler = COMPILER_MSVC;
+	} else if (str_eq(name, "pump") || str_eq(name, "distcc-pump")) {
+		cc_log("Detected PUMP compiler.");
+		compiler = COMPILER_PUMP;
+	} else {
+		cc_log("Unknown compiler '%s'... using GCC.");
+		compiler = COMPILER_GCC;
+	}
 	free(name);
-	return result;
 }
 
-static bool
-compiler_is_gcc(struct args *args)
+inline bool
+compiler_is_clang()
 {
-	char *name = basename(args->argv[0]);
-	bool result = strstr(name, "gcc") || strstr(name, "g++");
-	free(name);
-	return result;
+	return compiler == COMPILER_CLANG;
 }
 
-static bool
-compiler_is_msvc(struct args *args)
+inline bool
+compiler_is_gcc()
 {
-	char *name = basename(args->argv[0]);
-	bool result = path_eq(name, "cl") || path_eq(name, "cl.exe");
-	free(name);
-	return result;
+	return compiler == COMPILER_GCC;
 }
 
-static bool
-compiler_is_pump(struct args *args)
+inline bool
+compiler_is_msvc()
 {
-	char *name = basename(args->argv[0]);
-	bool result = str_eq(name, "pump") || str_eq(name, "distcc-pump");
-	free(name);
-	return result;
+	return compiler == COMPILER_MSVC;
+}
+
+inline bool
+compiler_is_pump()
+{
+	return compiler == COMPILER_PUMP;
 }
 
 // This is a string that identifies the current "version" of the hash sum
@@ -302,8 +317,8 @@ add_prefix(struct args *args, char *prefix_command)
 	char *e = x_strdup(prefix_command);
 	char *saveptr = NULL;
 	for (char *tok = strtok_r(e, " ", &saveptr);
-	     tok;
-	     tok = strtok_r(NULL, " ", &saveptr)) {
+			 tok;
+			 tok = strtok_r(NULL, " ", &saveptr)) {
 		char *p;
 
 		p = find_executable(tok, MYNAME);
@@ -414,8 +429,8 @@ signal_handler(int signum)
 	// If ccache was killed explicitly, then bring the compiler subprocess (if
 	// any) with us as well.
 	if (signum == SIGTERM
-	    && compiler_pid != 0
-	    && waitpid(compiler_pid, NULL, WNOHANG) == 0) {
+			&& compiler_pid != 0
+			&& waitpid(compiler_pid, NULL, WNOHANG) == 0) {
 		kill(compiler_pid, signum);
 	}
 
@@ -530,7 +545,7 @@ get_current_working_dir(void)
 		}
 		if (!current_working_dir) {
 			cc_log("Unable to determine current working directory: %s",
-			       strerror(errno));
+						 strerror(errno));
 			failed();
 		}
 	}
@@ -550,7 +565,7 @@ get_path_in_cache(const char *name, const char *suffix)
 	}
 
 	char *result =
-	  format("%s/%s%s", path, name + conf->cache_dir_levels, suffix);
+		format("%s/%s%s", path, name + conf->cache_dir_levels, suffix);
 	free(path);
 	return result;
 }
@@ -586,7 +601,7 @@ remember_include_file(char *path, struct mdfour *cpp_hash, bool system)
 	// stat fails on directories on win32.
 	DWORD attributes = GetFileAttributes(path);
 	if (attributes != INVALID_FILE_ATTRIBUTES &&
-	    attributes & FILE_ATTRIBUTE_DIRECTORY) {
+			attributes & FILE_ATTRIBUTE_DIRECTORY) {
 		goto ignore;
 	}
 #endif
@@ -620,25 +635,25 @@ remember_include_file(char *path, struct mdfour *cpp_hash, bool system)
 			continue;
 		}
 		if (strncmp(canonical, ignore, ignore_len) == 0
-		    && (ignore[ignore_len-1] == '/'
-		        || canonical[ignore_len] == '/'
+				&& (ignore[ignore_len-1] == '/'
+						|| canonical[ignore_len] == '/'
 #ifdef _WIN32
-		        || ignore[ignore_len-1] == '\\'
-		        || canonical[ignore_len] == '\\'
+						|| ignore[ignore_len-1] == '\\'
+						|| canonical[ignore_len] == '\\'
 #endif
-		        || canonical[ignore_len] == '\0')) {
+						|| canonical[ignore_len] == '\0')) {
 			goto ignore;
 		}
 	}
 
 	if (!(conf->sloppiness & SLOPPY_INCLUDE_FILE_MTIME)
-	    && st.st_mtime >= time_of_compilation) {
+			&& st.st_mtime >= time_of_compilation) {
 		cc_log("Include file %s too new", path);
 		goto failure;
 	}
 
 	if (!(conf->sloppiness & SLOPPY_INCLUDE_FILE_CTIME)
-	    && st.st_ctime >= time_of_compilation) {
+			&& st.st_ctime >= time_of_compilation) {
 		cc_log("Include file %s ctime too new", path);
 		goto failure;
 	}
@@ -675,7 +690,7 @@ remember_include_file(char *path, struct mdfour *cpp_hash, bool system)
 			int result = hash_source_code_string(conf, &fhash, source, size, path);
 			free(source);
 			if (result & HASH_SOURCE_CODE_ERROR
-			    || result & HASH_SOURCE_CODE_FOUND_TIME) {
+					|| result & HASH_SOURCE_CODE_FOUND_TIME) {
 				goto failure;
 			}
 		}
@@ -788,7 +803,7 @@ process_preprocessed_file(struct mdfour *hash, const char *path, bool pump)
 		q = p;
 		while ((header = strtok_r(q, PATH_DELIM, &saveptr))) {
 			ignore_headers = x_realloc(ignore_headers,
-			                           (ignore_headers_len+1) * sizeof(char *));
+																 (ignore_headers_len+1) * sizeof(char *));
 			ignore_headers[ignore_headers_len++] = x_strdup(header);
 			q = NULL;
 		}
@@ -838,15 +853,15 @@ process_preprocessed_file(struct mdfour *hash, const char *path, bool pump)
 		// Note that there may be other lines starting with '#' left after
 		// preprocessing as well, for instance "#    pragma".
 		if (q[0] == '#'
-		    // GCC:
-		    && ((q[1] == ' ' && q[2] >= '0' && q[2] <= '9')
-		        // GCC precompiled header:
-		        || (q[1] == 'p'
-		            && str_startswith(&q[2], "ragma GCC pch_preprocess "))
-		        // HP/AIX:
-		        || (q[1] == 'l' && q[2] == 'i' && q[3] == 'n' && q[4] == 'e'
-		            && q[5] == ' '))
-		    && (q == data || q[-1] == '\n')) {
+				// GCC:
+				&& ((q[1] == ' ' && q[2] >= '0' && q[2] <= '9')
+						// GCC precompiled header:
+						|| (q[1] == 'p'
+								&& str_startswith(&q[2], "ragma GCC pch_preprocess "))
+						// HP/AIX:
+						|| (q[1] == 'l' && q[2] == 'i' && q[3] == 'n' && q[4] == 'e'
+								&& q[5] == ' '))
+				&& (q == data || q[-1] == '\n')) {
 			// Workarounds for preprocessor linemarker bugs in GCC version 6.
 			if (q[2] == '3') {
 				if (str_startswith(q, "# 31 \"<command-line>\"\n")) {
@@ -928,7 +943,7 @@ process_preprocessed_file(struct mdfour *hash, const char *path, bool pump)
 			remember_include_file(inc_path, hash, system);
 			p = q; // Everything of interest between p and q has been hashed now.
 		} else if (q[0] == '.' && q[1] == 'i' && q[2] == 'n' && q[3] == 'c'
-		           && q[4] == 'b' && q[5] == 'i' && q[6] == 'n') {
+							 && q[4] == 'b' && q[5] == 'i' && q[6] == 'n') {
 			// An assembler .incbin statement (which could be part of inline
 			// assembly) refers to an external file. If the file changes, the hash
 			// should change as well, but finding out what file to hash is too hard
@@ -979,7 +994,7 @@ use_relative_paths_in_depfile(const char *depfile)
 	}
 	if (!has_absolute_include_headers) {
 		cc_log("No absolute path for included files found, skip using relative"
-		       " paths");
+					 " paths");
 		return; // nothing to do
 	}
 
@@ -1019,13 +1034,13 @@ use_relative_paths_in_depfile(const char *depfile)
 
 	if (ferror(f)) {
 		cc_log("Error reading dependency file: %s, skip relative path usage",
-		       depfile);
+					 depfile);
 		result = false;
 		goto out;
 	}
 	if (ferror(tmpf)) {
 		cc_log("Error writing temporary dependency file: %s, skip relative path"
-		       " usage", tmp_file);
+					 " usage", tmp_file);
 		result = false;
 		goto out;
 	}
@@ -1036,7 +1051,7 @@ out:
 	if (result) {
 		if (x_rename(tmp_file, depfile) != 0) {
 			cc_log("Error renaming dependency file: %s -> %s (%s), skip relative"
-			       " path usage", tmp_file, depfile, strerror(errno));
+						 " path usage", tmp_file, depfile, strerror(errno));
 			result = false;
 		} else {
 			cc_log("Renamed dependency file: %s -> %s", tmp_file, depfile);
@@ -1068,7 +1083,7 @@ put_file_in_cache(const char *source, const char *dest)
 	}
 	if (!do_link) {
 		int ret = copy_file(
-		  source, dest, conf->compression ? conf->compression_level : 0);
+			source, dest, conf->compression ? conf->compression_level : 0);
 		if (ret != 0) {
 			cc_log("Failed to copy %s to %s: %s", source, dest, strerror(errno));
 			stats_update(STATS_ERROR);
@@ -1106,10 +1121,10 @@ get_file_from_cache(const char *source, const char *dest)
 			stats_update(STATS_MISSING);
 		} else {
 			cc_log("Failed to %s %s to %s: %s",
-			       do_link ? "link" : "copy",
-			       source,
-			       dest,
-			       strerror(errno));
+						 do_link ? "link" : "copy",
+						 source,
+						 dest,
+						 strerror(errno));
 			stats_update(STATS_ERROR);
 		}
 
@@ -1142,9 +1157,9 @@ send_cached_stderr(void)
 void update_manifest_file(void)
 {
 	if (!conf->direct_mode
-	    || !included_files
-	    || conf->read_only
-	    || conf->read_only_direct) {
+			|| !included_files
+			|| conf->read_only
+			|| conf->read_only_direct) {
 		return;
 	}
 
@@ -1213,7 +1228,7 @@ to_cache(struct args *args)
 		free(base_name);
 	}
 
-	if (compiler_is_msvc(args)) {
+	if (compiler_is_msvc()) {
 		char *fo = format("-Fo%s", output_obj);
 		args_add(args, fo);
 		free(fo);
@@ -1241,9 +1256,9 @@ to_cache(struct args *args)
 
 	cc_log("Running real compiler");
 	int status =
-	  execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
+		execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
 
-	if (compiler_is_msvc(args)) {
+	if (compiler_is_msvc()) {
 		args_pop(args, 2);  // -Foooutput.obj input.c
 	} else {
 		args_pop(args, 3);  //	-o output.o input.c
@@ -1269,13 +1284,13 @@ to_cache(struct args *args)
 
 	// MSVC compiler always print the input file name to stdout,
 	// plus parts of the warnings/error messages.
-	if (compiler_is_msvc(args)) {
+	if (compiler_is_msvc()) {
 		// Drop if we have just the filename (plus CRLF):
 		if (st.st_size > (int)strlen(input_file)+2) {
 			char *tmp_stderr2 = format("%s.2", tmp_stderr);
 			if (x_rename(tmp_stderr, tmp_stderr2)) {
 				cc_log("Failed to rename %s to %s: %s", tmp_stderr, tmp_stderr2,
-				       strerror(errno));
+							 strerror(errno));
 				failed();
 			}
 
@@ -1312,7 +1327,7 @@ to_cache(struct args *args)
 
 	// distcc-pump outputs lines like this:
 	// __________Using # distcc servers in pump mode
-	if (st.st_size != 0 && !compiler_is_pump(args)) {
+	if (st.st_size != 0 && !compiler_is_pump()) {
 		cc_log("Compiler produced stdout");
 		stats_update(STATS_STDOUT);
 		tmp_unlink(tmp_stdout);
@@ -1336,7 +1351,7 @@ to_cache(struct args *args)
 		char *tmp_stderr2 = format("%s.2", tmp_stderr);
 		if (x_rename(tmp_stderr, tmp_stderr2)) {
 			cc_log("Failed to rename %s to %s: %s", tmp_stderr, tmp_stderr2,
-			       strerror(errno));
+						 strerror(errno));
 			failed();
 		}
 
@@ -1353,7 +1368,7 @@ to_cache(struct args *args)
 		}
 
 		int fd_result =
-		  open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+			open(tmp_stderr, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
 		if (fd_result == -1) {
 			cc_log("Failed opening %s: %s", tmp_stderr, strerror(errno));
 			failed();
@@ -1426,17 +1441,17 @@ to_cache(struct args *args)
 	}
 	if (st.st_size > 0) {
 		if (move_uncompressed_file(
-		      tmp_stderr, cached_stderr,
-		      conf->compression ? conf->compression_level : 0) != 0) {
+					tmp_stderr, cached_stderr,
+					conf->compression ? conf->compression_level : 0) != 0) {
 			cc_log("Failed to move %s to %s: %s", tmp_stderr, cached_stderr,
-			       strerror(errno));
+						 strerror(errno));
 			stats_update(STATS_ERROR);
 			failed();
 		}
 		cc_log("Stored in cache: %s", cached_stderr);
 		if (!conf->compression
-		    // If the file was compressed, obtain the size again:
-		    || x_stat(cached_stderr, &st) == 0) {
+				// If the file was compressed, obtain the size again:
+				|| x_stat(cached_stderr, &st) == 0) {
 			stats_update_size(file_size(&st), 1);
 		}
 	} else {
@@ -1517,7 +1532,7 @@ to_cache(struct args *args)
 		char *first_level_dir = dirname(stats_file);
 		if (create_cachedirtag(first_level_dir) != 0) {
 			cc_log("Failed to create %s/CACHEDIR.TAG (%s)\n",
-			       first_level_dir, strerror(errno));
+						 first_level_dir, strerror(errno));
 			stats_update(STATS_ERROR);
 			failed();
 		}
@@ -1612,7 +1627,7 @@ get_object_name_from_cpp(struct args *args, struct mdfour *hash)
 		}
 	} else {
 		hash_delimiter(hash, "cpp");
-		if (!process_preprocessed_file(hash, path_stdout, compiler_is_pump(args))) {
+		if (!process_preprocessed_file(hash, path_stdout, compiler_is_pump())) {
 			stats_update(STATS_ERROR);
 			failed();
 		}
@@ -1675,7 +1690,7 @@ update_cached_result_globals(struct file_hash *hash)
 // the CCACHE_COMPILERCHECK setting.
 static void
 hash_compiler(struct mdfour *hash, struct stat *st, const char *path,
-              bool allow_command)
+							bool allow_command)
 {
 	if (str_eq(conf->compiler_check, "none")) {
 		// Do nothing.
@@ -1691,7 +1706,7 @@ hash_compiler(struct mdfour *hash, struct stat *st, const char *path,
 		hash_file(hash, path);
 	} else { // command string
 		if (!hash_multicommand_output(
-		      hash, conf->compiler_check, orig_args->argv[0])) {
+					hash, conf->compiler_check, orig_args->argv[0])) {
 			fatal("Failure running compiler check command: %s", conf->compiler_check);
 		}
 	}
@@ -1802,7 +1817,7 @@ calculate_common_hash(struct args *args, struct mdfour *hash)
 	}
 
 	// Possibly hash GCC_COLORS (for color diagnostics).
-	if (compiler_is_gcc(args)) {
+	if (compiler_is_gcc()) {
 		const char *gcc_colors = getenv("GCC_COLORS");
 		if (gcc_colors) {
 			hash_delimiter(hash, "gcccolors");
@@ -1850,7 +1865,7 @@ calculate_object_hash(struct args *args, struct mdfour *hash, int direct_mode)
 		// they are going to have any effect at all. For precompiled headers this
 		// might not be the case.
 		if (!direct_mode && !output_is_precompiled_header
-		    && !using_precompiled_header) {
+				&& !using_precompiled_header) {
 			if (compopt_affects_cpp(args->argv[i])) {
 				i++;
 				continue;
@@ -1865,11 +1880,11 @@ calculate_object_hash(struct args *args, struct mdfour *hash, int direct_mode)
 		if (generating_dependencies) {
 			if (str_startswith(args->argv[i], "-Wp,")) {
 				if (str_startswith(args->argv[i], "-Wp,-MD,")
-				    && !strchr(args->argv[i] + 8, ',')) {
+						&& !strchr(args->argv[i] + 8, ',')) {
 					hash_string_length(hash, args->argv[i], 8);
 					continue;
 				} else if (str_startswith(args->argv[i], "-Wp,-MMD,")
-				           && !strchr(args->argv[i] + 9, ',')) {
+									 && !strchr(args->argv[i] + 9, ',')) {
 					hash_string_length(hash, args->argv[i], 9);
 					continue;
 				}
@@ -1903,17 +1918,17 @@ calculate_object_hash(struct args *args, struct mdfour *hash, int direct_mode)
 		}
 
 		if (str_startswith(args->argv[i], "-fplugin=")
-		    && x_stat(args->argv[i] + 9, &st) == 0) {
+				&& x_stat(args->argv[i] + 9, &st) == 0) {
 			hash_delimiter(hash, "plugin");
 			hash_compiler(hash, &st, args->argv[i] + 9, false);
 			continue;
 		}
 
 		if (str_eq(args->argv[i], "-Xclang")
-		    && i + 3 < args->argc
-		    && str_eq(args->argv[i+1], "-load")
-		    && str_eq(args->argv[i+2], "-Xclang")
-		    && x_stat(args->argv[i+3], &st) == 0) {
+				&& i + 3 < args->argc
+				&& str_eq(args->argv[i+1], "-load")
+				&& str_eq(args->argv[i+2], "-Xclang")
+				&& x_stat(args->argv[i+3], &st) == 0) {
 			hash_delimiter(hash, "plugin");
 			hash_compiler(hash, &st, args->argv[i+3], false);
 			i += 3;
@@ -2027,7 +2042,7 @@ calculate_object_hash(struct args *args, struct mdfour *hash, int direct_mode)
 				args_add(args, arch_args[i]);
 				object_hash = get_object_name_from_cpp(args, hash);
 				cc_log("Got object file hash from preprocessor with -arch %s",
-				       arch_args[i]);
+							 arch_args[i]);
 				if (i != arch_args_size - 1) {
 					free(object_hash);
 					object_hash = NULL;
@@ -2087,7 +2102,7 @@ from_cache(enum fromcache_call_mode mode, bool put_object_in_manifest)
 
 	// (If mode != FROMCACHE_DIRECT_MODE, the dependency file is created by gcc.)
 	bool produce_dep_file =
-	  generating_dependencies && mode == FROMCACHE_DIRECT_MODE;
+		generating_dependencies && mode == FROMCACHE_DIRECT_MODE;
 
 	// If the dependency file should be in the cache, check that it is.
 	if (produce_dep_file && stat(cached_dep, &st) != 0) {
@@ -2146,7 +2161,7 @@ from_cache(enum fromcache_call_mode mode, bool put_object_in_manifest)
 	}
 
 	if (generating_dependencies && mode == FROMCACHE_CPP_MODE
-	    && !conf->read_only && !conf->read_only_direct) {
+			&& !conf->read_only && !conf->read_only_direct) {
 		put_file_in_cache(output_dep, cached_dep);
 	}
 
@@ -2202,7 +2217,7 @@ find_compiler(char **argv)
 	}
 	if (path_eq(compiler, argv[0])) {
 		fatal("Recursive invocation (the name of the ccache binary must be \"%s\")",
-		      MYNAME);
+					MYNAME);
 	}
 	orig_args->argv[0] = compiler;
 }
@@ -2211,8 +2226,8 @@ bool
 is_precompiled_header(const char *path)
 {
 	return str_eq(get_extension(path), ".gch")
-	       || str_eq(get_extension(path), ".pch")
-	       || str_eq(get_extension(path), ".pth");
+				 || str_eq(get_extension(path), ".pch")
+				 || str_eq(get_extension(path), ".pth");
 }
 
 static bool
@@ -2265,7 +2280,7 @@ detect_pch(const char *option, const char *arg, bool *found_pch)
 	if (pch_file) {
 		if (included_pch_file) {
 			cc_log("Multiple precompiled headers used: %s and %s\n",
-			       included_pch_file, pch_file);
+						 included_pch_file, pch_file);
 			stats_update(STATS_ARGS);
 			return false;
 		}
@@ -2280,15 +2295,15 @@ detect_pch(const char *option, const char *arg, bool *found_pch)
 // -E; this is added later. Returns true on success, otherwise false.
 bool
 cc_process_args(struct args *args, struct args **preprocessor_args,
-                struct args **compiler_args)
+								struct args **compiler_args)
 {
 	bool found_c_opt = false;
 	bool found_S_opt = false;
 	bool found_pch = false;
 	bool found_fpch_preprocess = false;
 	const char *explicit_language = NULL; // As specified with -x.
-	const char *file_language;            // As deduced from file extension.
-	const char *actual_language;          // Language to actually use.
+	const char *file_language = NULL;     // As deduced from file extension.
+	const char *actual_language = NULL;   // Language to actually use.
 	const char *input_charset = NULL;
 	// Is the dependency makefile name overridden with -MF?
 	bool dependency_filename_specified = false;
@@ -2312,6 +2327,9 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	struct args *dep_args = args_init(0, NULL);
 
 	bool found_color_diagnostics = false;
+
+	// make sure compilter is detected:
+	set_compiler(expanded_args->argv[0]);
 
 	int argc = expanded_args->argc;
 	char **argv = expanded_args->argv;
@@ -2401,11 +2419,6 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		// Switch all options of MSVC /form, to allow compopt search.
-		if (compiler_is_msvc(args) && argv[i][0] == '-') {
-			argv[i][0] = '/';
-		}
-
 		// These are always too hard.
 		if (compopt_too_hard(argv[i]) || str_startswith(argv[i], "-fdump-")) {
 			cc_log("Compiler option %s is unsupported", argv[i]);
@@ -2432,7 +2445,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		if (str_eq(argv[i], "-arch")) {
 			if (arch_args_size == MAX_ARCH_ARGS - 1) {
 				cc_log("Too many -arch compiler options; ccache supports at most %d",
-				       MAX_ARCH_ARGS);
+							 MAX_ARCH_ARGS);
 				stats_update(STATS_UNSUPPORTED_OPTION);
 				result = false;
 				goto out;
@@ -2448,8 +2461,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		if (str_eq(argv[i], "-fpch-preprocess")
-		    || str_eq(argv[i], "-emit-pch")
-		    || str_eq(argv[i], "-emit-pth")) {
+				|| str_eq(argv[i], "-emit-pch")
+				|| str_eq(argv[i], "-emit-pth")) {
 			found_fpch_preprocess = true;
 		}
 
@@ -2502,13 +2515,14 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// Alternate form of -o with no space.
-		if (str_startswith(argv[i], "-o")) {
+		if (!compiler_is_msvc() && str_startswith(argv[i], "-o")) {
 			output_obj = make_relative_path(x_strdup(&argv[i][2]));
 			continue;
 		}
 
 		// CL /Fo: and (optional) space.
-		if (compiler_is_msvc(args) && str_startswith(argv[i], "/Fo:")) {
+		if (compiler_is_msvc() &&
+				(str_startswith(argv[i], "/Fo:") || str_startswith(argv[i], "-Fo:"))) {
 			if (strlen(argv[i]) > 4) {
 				output_obj = make_relative_path(x_strdup(&argv[i][4]));
 			} else {
@@ -2525,7 +2539,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		// CL /Fo w/o space.
-		if (compiler_is_msvc(args) && str_startswith(argv[i], "/Fo")) {
+		if (compiler_is_msvc() &&
+				(str_startswith(argv[i], "/Fo") || str_startswith(argv[i], "-Fo"))) {
 			if (argv[i][3] == '"' && argv[i][strlen(argv[i])-1] == '"') {
 				argv[i][strlen(argv[i])-1] = '\0';
 				output_obj = make_relative_path(x_strdup(&argv[i][4]));
@@ -2566,7 +2581,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 
-		if (compiler_is_msvc(args) && str_startswith(argv[i], "/O")) {
+		if (compiler_is_msvc() && str_startswith(argv[i], "/O")) {
 			generating_debuginfo = true;
 			args_add(stripped_args, argv[i]);
 			continue;
@@ -2580,8 +2595,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 		if (str_startswith(argv[i], "-MF") ||
-		    str_startswith(argv[i], "-MQ") ||
-		    str_startswith(argv[i], "-MT")) {
+				str_startswith(argv[i], "-MQ") ||
+				str_startswith(argv[i], "-MT")) {
 
 			char *arg_opt, *relpath;
 			bool separate_argument = (strlen(argv[i]) == 3);
@@ -2638,7 +2653,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 			continue;
 		}
 		if (str_eq(argv[i], "--coverage") // = -fprofile-arcs -ftest-coverage
-		    || str_eq(argv[i], "-coverage")) { // Undocumented but still works.
+				|| str_eq(argv[i], "-coverage")) { // Undocumented but still works.
 			profile_arcs = true;
 			generating_coverage = true;
 			args_add(stripped_args, argv[i]);
@@ -2674,8 +2689,8 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 		if (str_startswith(argv[i], "-Wp,")) {
 			if (str_eq(argv[i], "-Wp,-P")
-			    || strstr(argv[i], ",-P,")
-			    || str_endswith(argv[i], ",-P")) {
+					|| strstr(argv[i], ",-P,")
+					|| str_endswith(argv[i], ",-P")) {
 				// -P removes preprocessor information in such a way that the object
 				// file from compiling the preprocessed file will not be equal to the
 				// object file produced when compiling without ccache.
@@ -2683,7 +2698,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 				stats_update(STATS_UNSUPPORTED_OPTION);
 				failed();
 			} else if (str_startswith(argv[i], "-Wp,-MD,")
-			           && !strchr(argv[i] + 8, ',')) {
+								 && !strchr(argv[i] + 8, ',')) {
 				generating_dependencies = true;
 				dependency_filename_specified = true;
 				free(output_dep);
@@ -2691,7 +2706,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 				args_add(dep_args, argv[i]);
 				continue;
 			} else if (str_startswith(argv[i], "-Wp,-MMD,")
-			           && !strchr(argv[i] + 9, ',')) {
+								 && !strchr(argv[i] + 9, ',')) {
 				generating_dependencies = true;
 				dependency_filename_specified = true;
 				free(output_dep);
@@ -2699,18 +2714,18 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 				args_add(dep_args, argv[i]);
 				continue;
 			} else if (str_startswith(argv[i], "-Wp,-D")
-			           && !strchr(argv[i] + 6, ',')) {
+								 && !strchr(argv[i] + 6, ',')) {
 				// Treat it like -D.
 				args_add(cpp_args, argv[i] + 4);
 				continue;
 			} else if (str_eq(argv[i], "-Wp,-MP")
-			           || (strlen(argv[i]) > 8
-			               && str_startswith(argv[i], "-Wp,-M")
-			               && argv[i][7] == ','
-			               && (argv[i][6] == 'F'
-			                   || argv[i][6] == 'Q'
-			                   || argv[i][6] == 'T')
-			               && !strchr(argv[i] + 8, ','))) {
+								 || (strlen(argv[i]) > 8
+										 && str_startswith(argv[i], "-Wp,-M")
+										 && argv[i][7] == ','
+										 && (argv[i][6] == 'F'
+												 || argv[i][6] == 'Q'
+												 || argv[i][6] == 'T')
+										 && !strchr(argv[i] + 8, ','))) {
 				// TODO: Make argument to MF/MQ/MT relative.
 				args_add(dep_args, argv[i]);
 				continue;
@@ -2770,11 +2785,11 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 
 			bool supported_profile_option = false;
 			if (str_startswith(argv[i], "-fprofile-generate")
-			    || str_eq(argv[i], "-fprofile-arcs")) {
+					|| str_eq(argv[i], "-fprofile-arcs")) {
 				profile_generate = true;
 				supported_profile_option = true;
 			} else if (str_startswith(argv[i], "-fprofile-use")
-			           || str_eq(argv[i], "-fbranch-probabilities")) {
+								 || str_eq(argv[i], "-fbranch-probabilities")) {
 				profile_use = true;
 				supported_profile_option = true;
 			} else if (str_eq(argv[i], "-fprofile-dir")) {
@@ -2802,11 +2817,11 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		}
 
 		if (str_eq(argv[i], "-fcolor-diagnostics")
-		    || str_eq(argv[i], "-fno-color-diagnostics")
-		    || str_eq(argv[i], "-fdiagnostics-color")
-		    || str_eq(argv[i], "-fdiagnostics-color=always")
-		    || str_eq(argv[i], "-fno-diagnostics-color")
-		    || str_eq(argv[i], "-fdiagnostics-color=never")) {
+				|| str_eq(argv[i], "-fno-color-diagnostics")
+				|| str_eq(argv[i], "-fdiagnostics-color")
+				|| str_eq(argv[i], "-fdiagnostics-color=always")
+				|| str_eq(argv[i], "-fno-diagnostics-color")
+				|| str_eq(argv[i], "-fdiagnostics-color=never")) {
 			args_add(stripped_args, argv[i]);
 			found_color_diagnostics = true;
 			continue;
@@ -2855,7 +2870,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 
 		// Same as above but options with concatenated argument.
 		if (argv[i][0] == '-' ||
-		    (argv[i][0] == '/' && compiler_is_msvc(args))) {
+				(argv[i][0] == '/' && compiler_is_msvc())) {
 			int arg_len = compopt_takes_concat_arg(argv[i]);
 			if (arg_len > 0) {
 				char *option = x_strndup(argv[i], arg_len);
@@ -2900,7 +2915,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		// Other GNU options.
 		if (argv[i][0] == '-') {
 			if (compopt_affects_cpp(argv[i]) ||
-			    compopt_prefix_affects_cpp(argv[i])) {
+					compopt_prefix_affects_cpp(argv[i])) {
 				args_add(cpp_args, argv[i]);
 			} else {
 				args_add(stripped_args, argv[i]);
@@ -2910,9 +2925,9 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 
 		// Other CL options.
 		if (argv[i][0] == '/' &&
-		    compiler_is_msvc(args)) {
+				compiler_is_msvc()) {
 			if (compopt_affects_cpp(argv[i]) ||
-			    compopt_prefix_affects_cpp(argv[i])) {
+					compopt_prefix_affects_cpp(argv[i])) {
 				args_add(cpp_args, argv[i]);
 				continue;
 			} else if (compopt_known(argv[i])) {
@@ -2926,7 +2941,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		struct stat st;
 		if (stat(argv[i], &st) != 0 || !S_ISREG(st.st_mode)) {
 			cc_log("%s is not a regular file, not considering as input file",
-			       argv[i]);
+						 argv[i]);
 			args_add(stripped_args, argv[i]);
 			continue;
 		}
@@ -2986,7 +3001,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 		using_precompiled_header = true;
 		if (!(conf->sloppiness & SLOPPY_TIME_MACROS)) {
 			cc_log("You have to specify \"time_macros\" sloppiness when using"
-			       " precompiled headers to get direct hits");
+						 " precompiled headers to get direct hits");
 			cc_log("Disabling direct mode");
 			stats_update(STATS_CANTUSEPCH);
 			result = false;
@@ -3011,12 +3026,12 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	}
 
 	output_is_precompiled_header =
-	  actual_language && strstr(actual_language, "-header");
+		actual_language && strstr(actual_language, "-header");
 
 	if (output_is_precompiled_header
-	    && !(conf->sloppiness & SLOPPY_PCH_DEFINES)) {
+			&& !(conf->sloppiness & SLOPPY_PCH_DEFINES)) {
 		cc_log("You have to specify \"pch_defines,time_macros\" sloppiness when"
-		       " creating precompiled headers");
+					 " creating precompiled headers");
 		stats_update(STATS_CANTUSEPCH);
 		result = false;
 		goto out;
@@ -3080,7 +3095,7 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 				result = false;
 				goto out;
 			}
-			if (compiler_is_msvc(args)) {
+			if (compiler_is_msvc()) {
 				*p = 0;
 				reformat(&output_obj, "%s.obj", output_obj);
 			} else {
@@ -3106,12 +3121,12 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 
 	// Cope with -FoDebug/ directory name
 	if (input_file &&
-	    compiler_is_msvc(args) &&
-	    output_obj &&
-	    (str_eq(output_obj, ".") ||
-	     str_eq(output_obj, "..") ||
-	     str_endswith(output_obj, "/") ||
-	     str_endswith(output_obj, "\\"))) {
+			compiler_is_msvc() &&
+			output_obj &&
+			(str_eq(output_obj, ".") ||
+			 str_eq(output_obj, "..") ||
+			 str_endswith(output_obj, "/") ||
+			 str_endswith(output_obj, "\\"))) {
 		char *base = basename(input_file);
 		char *next = remove_extension(base);
 		if (str_endswith(output_obj, ".")) {
@@ -3126,9 +3141,9 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	// Cope with -o /dev/null.
 	struct stat st;
 	if (output_obj
-	    && !str_eq(output_obj, "/dev/null")
-	    && stat(output_obj, &st) == 0
-	    && !S_ISREG(st.st_mode)) {
+			&& !str_eq(output_obj, "/dev/null")
+			&& stat(output_obj, &st) == 0
+			&& !S_ISREG(st.st_mode)) {
 		cc_log("Not a regular file: %s", output_obj);
 		stats_update(STATS_DEVICE);
 		result = false;
@@ -3154,12 +3169,12 @@ cc_process_args(struct args *args, struct args **preprocessor_args,
 	// Since output is redirected, compilers will not color their output by
 	// default, so force it explicitly if it would be otherwise done.
 	if (!found_color_diagnostics && color_output_possible()) {
-		if (compiler_is_clang(args)) {
+		if (compiler_is_clang()) {
 			if (!str_eq(actual_language, "assembler")) {
 				args_add(stripped_args, "-fcolor-diagnostics");
 				cc_log("Automatically enabling colors");
 			}
-		} else if (compiler_is_gcc(args)) {
+		} else if (compiler_is_gcc()) {
 			// GCC has it since 4.9, but that'd require detecting what GCC version is
 			// used for the actual compile. However it requires also GCC_COLORS to be
 			// set (and not empty), so use that for detecting if GCC would use
@@ -3337,7 +3352,7 @@ initialize(void)
 	exitfn_add_nullary(clean_up_pending_tmp_files);
 
 	cc_log("=== CCACHE %s STARTED =========================================",
-	       CCACHE_VERSION);
+				 CCACHE_VERSION);
 
 	if (conf->umask != UINT_MAX) {
 		umask(conf->umask);
@@ -3548,7 +3563,7 @@ ccache(int argc, char *argv[])
 	update_cached_result_globals(object_hash);
 
 	if (object_hash_from_manifest
-	    && !file_hashes_equal(object_hash_from_manifest, object_hash)) {
+			&& !file_hashes_equal(object_hash_from_manifest, object_hash)) {
 		// The hash from manifest differs from the hash of the preprocessor output.
 		// This could be because:
 		//
@@ -3642,7 +3657,7 @@ ccache_main_options(int argc, char *argv[])
 			initialize();
 			char *errmsg;
 			if (conf_set_value_in_file(primary_config_path, "max_files", optarg,
-			                           &errmsg)) {
+																 &errmsg)) {
 				unsigned files = atoi(optarg);
 				if (files == 0) {
 					printf("Unset cache file limit\n");
@@ -3664,7 +3679,7 @@ ccache_main_options(int argc, char *argv[])
 			}
 			char *errmsg;
 			if (conf_set_value_in_file(primary_config_path, "max_size", optarg,
-			                           &errmsg)) {
+																 &errmsg)) {
 				if (size == 0) {
 					printf("Unset cache size limit\n");
 				} else {

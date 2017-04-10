@@ -98,7 +98,7 @@ static const struct compopt compopts_msvc[] = {
 	{"/FR",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // extended.sbr
 	{"/FR:",  TAKES_ARG | TAKES_PATH},                    // extended.sbr
 	{"/FS",   0},
-	{"/FU",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG}, // #undef var
+	{"/FU",   AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // force assembly
 	{"/Fa",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // assembly_listing.txt
 	{"/Fa:",  TAKES_ARG | TAKES_PATH},                    // assembly_listing.txt
 	{"/Fd",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // debug.pdb
@@ -115,6 +115,7 @@ static const struct compopt compopts_msvc[] = {
 	{"/Fp:",  TAKES_ARG | TAKES_PATH},                    // headers.pch
 	{"/Fr",   TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // source_browser.sbr
 	{"/Fr:",  TAKES_ARG | TAKES_PATH},                    // source_browser.sbr
+	{"/Fx",   AFFECTS_CPP},
 	{"/GA",   0},
 	{"/GF",   0},
 	{"/GH",   0},
@@ -165,6 +166,7 @@ static const struct compopt compopts_msvc[] = {
 	{"/Wall", 0},
 	{"/Wv:",  TAKES_CONCAT_ARG},
 	{"/X",    AFFECTS_CPP},
+	{"/Y",   0},
 	{"/Yc",   TAKES_CONCAT_ARG | TAKES_PATH},
 	{"/Yd",   0},
 	{"/Yl",   TAKES_CONCAT_ARG},
@@ -189,7 +191,6 @@ static const struct compopt compopts_msvc[] = {
 	{"/clr:", TAKES_CONCAT_ARG},
 	{"/constexpr:", TAKES_CONCAT_ARG},
 	{"/doc",  TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH}, // .xdc
-	{"/doc:", TAKES_ARG | TAKES_CONCAT_ARG | TAKES_PATH},
 	{"/errorReport:", TAKES_CONCAT_ARG},
 	{"/execution-charset:", TAKES_CONCAT_ARG},
 	{"/favor:", TAKES_CONCAT_ARG},
@@ -235,46 +236,52 @@ static const struct compopt *
 find(const char *option)
 {
 	struct compopt key;
-	key.name = option;
 
-	if (option[0] == '-') {
+	if (compiler == COMPILER_MSVC) {
+		char* s = x_strdup(option);
+		if (s[0] == '-') {
+			s[0] = '/';
+		}
+		key.name = s;
+		const struct compopt* co = bsearch(
+			&key, compopts_msvc, sizeof(compopts_msvc) /
+			sizeof(compopts_msvc[0]),
+			sizeof(compopts[0]),
+			compare_compopts);
+		free(s);
+		return co;
+	} else {
+		key.name = option;
 		return bsearch(
 			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
 			sizeof(compopts[0]),
 			compare_compopts);
 	}
-
-	if (option[0] == '/') {
-		return bsearch(
-			&key, compopts_msvc, sizeof(compopts_msvc) /
-			sizeof(compopts_msvc[0]),
-			sizeof(compopts[0]),
-			compare_compopts);
-	}
-
-	return NULL;
 }
 
 static const struct compopt *
 find_prefix(const char *option)
 {
 	struct compopt key;
-	key.name = option;
 
-	if (option[0] == '-') {
+	if (compiler == COMPILER_MSVC) {
+		char* s = x_strdup(option);
+		if (s[0] == '-') {
+			s[0] = '/';
+		}
+		key.name = s;
+		const struct compopt* co = bsearch(
+			&key, compopts_msvc, sizeof(compopts_msvc) /
+			sizeof(compopts_msvc[0]),
+			sizeof(compopts[0]), compare_prefix_compopts);
+		free(s);
+		return co;
+	} else {
+		key.name = option;
 		return bsearch(
 			&key, compopts, sizeof(compopts) / sizeof(compopts[0]),
 			sizeof(compopts[0]), compare_prefix_compopts);
 	}
-
-	if (option[0] == '/') {
-		return bsearch(
-			&key, compopts_msvc, sizeof(compopts_msvc) /
-			sizeof(compopts_msvc[0]),
-			sizeof(compopts[0]), compare_prefix_compopts);
-	}
-
-	return NULL;
 }
 
 // Runs fn on the first two characters of option.
@@ -294,18 +301,18 @@ compopt_verify_sortedness(void)
 	for (size_t i = 1; i < sizeof(compopts)/sizeof(compopts[0]); i++) {
 		if (strcmp(compopts[i-1].name, compopts[i].name) >= 0) {
 			fprintf(stderr,
-			        "compopt_verify_sortedness: %s >= %s\n",
-			        compopts[i-1].name,
-			        compopts[i].name);
+							"compopt_verify_sortedness: %s >= %s\n",
+							compopts[i-1].name,
+							compopts[i].name);
 			return false;
 		}
 	}
 	for (size_t i = 1; i < sizeof(compopts_msvc)/sizeof(compopts_msvc[0]); i++) {
 		if (strcmp(compopts_msvc[i-1].name, compopts_msvc[i].name) >= 0) {
 			fprintf(stderr,
-			        "compopt_verify_sortedness: %s >= %s\n",
-			        compopts_msvc[i-1].name,
-			        compopts_msvc[i].name);
+							"compopt_verify_sortedness: %s >= %s\n",
+							compopts_msvc[i-1].name,
+							compopts_msvc[i].name);
 			return false;
 		}
 	}
@@ -363,7 +370,7 @@ compopt_takes_concat_arg(const char *option)
 	}
 	int len = (int)strlen(co->name);
 	return (co->type & TAKES_PATH) && is_full_path(option+len)
-	       ? len : 0;
+				 ? len : 0;
 }
 
 // Determines if the prefix of the option matches any option and affects the

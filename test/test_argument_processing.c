@@ -603,14 +603,14 @@ TEST(CL_slash_E_should_result_in_called_for_preprocessing)
 	args_free(act_cc);
 }
 
-TEST(cl_dash_EP_should_result_in_called_for_preprocessing)
+TEST(cl_dash_P_should_result_in_called_for_preprocessing)
 {
-	struct args *orig = args_init_from_string("cl -c foo.c -E -P foo.i");
+	struct args *orig = args_init_from_string("cl -c foo.c -P foo.i");
 	struct args *preprocessed, *compiler;
 
 	create_file("foo.c", "");
 	CHECK(!cc_process_args(orig, &preprocessed, &compiler));
-	CHECK_INT_EQ(3, stats_get_pending(STATS_PREPROCESSING));
+	CHECK_INT_EQ(2, stats_get_pending(STATS_PREPROCESSING));
 
 	args_free(orig);
 }
@@ -830,20 +830,32 @@ TEST(CL_dash_P_should_be_unsupported)
 
 	create_file("foo.c", "");
 
-	CHECK(!cc_process_args(orig, &preprocessed, &compiler));
 	CHECK_INT_EQ(2, stats_get_pending(STATS_UNSUPPORTED_OPTION));
+	CHECK(!cc_process_args(orig, &preprocessed, &compiler));
+	CHECK_INT_EQ(3, stats_get_pending(STATS_UNSUPPORTED_OPTION));
 
 	args_free(orig);
 }
 
 TEST(CL_dependency_slash_flags_should_only_be_sent_to_the_preprocessor)
 {
-#define CMD \
-	"cl /C /DA=1 /FIbar.h /Iinclude/Dir /UNDEBUG /u /X"
-	struct args *orig = args_init_from_string(CMD " -c foo.c -Fofoo.obj");
-	struct args *exp_cpp = args_init_from_string(CMD);
-#undef CMD
-	struct args *exp_cc = args_init_from_string("cl -c");
+#define CPP \
+	"/AI. /C /DA=1 /DB#2 /FIbar.h /FUbar.txt /Fx /Iinclude/Dir /UNDEBUG /u /X "
+#define OTHER \
+	"/EHsc /FAscu /FC /FRextended.sbr /Falist.txt /Fdfoo.pdb /Fefoo.exe /Fmmap.txt " \
+	"/Fpheader.pch /Frfoo.sbr /GA /GF /GH /GL /GR /GS /GT /GX /GZ /Ge /Gh /Gm /Gs666 " \
+	"/Gv /Gw /Gy /H42 /J /LDd /MDd /Ox /Qfast_transcendentals /Qpar /Qpar-report:2 " \
+	"/TC /TP /Tcfoo.c /Tpfoo.cpp /V1.0.0 /W3 /WL /WX /Wall /Wv:10.00.14393 /Ycheader.pch " \
+	"/Yd /Ylmain /Yuheader.pch /Y- /Z7 /ZW /Za /ZC:auto- /Zi /Zl /Zm200 /Zo- /Zp1 /Zs " \
+	"/arch:SSE2 /await /bigobj /clr:pure /constexpr:depth4 /docfile.xdc /errorReport:error.txt " \
+	"/execution-charset:utf-8 /favor:AMD64 /fp:fast /guard:cf- /homeparams /nologo /openmp " \
+	"/sdl /source-charset:latin1 /validate-charset- /vd2 /vmvoid /volatile:iso " \
+	"/w34693 /wd4593 /we4493 /wo4393 "
+	struct args *orig = args_init_from_string("cl " CPP OTHER " -c foo.c -Fofoo.obj");
+	struct args *exp_cpp = args_init_from_string("cl " OTHER CPP);
+	struct args *exp_cc = args_init_from_string("cl " OTHER "-c");
+#undef CPP
+#undef OTHER
 	struct args *act_cpp = NULL, *act_cc = NULL;
 	create_file("foo.c", "");
 
@@ -857,15 +869,25 @@ TEST(CL_dependency_slash_flags_should_only_be_sent_to_the_preprocessor)
 
 TEST(CL_dependency_dash_flags_should_only_be_sent_to_the_preprocessor)
 {
-#define CMDDASH \
-	"-C -DA=1 -FIbar.h -Iinclude/Dir -UNDEBUG -u -X"
-#define CMDSLASH \
-	"/C /DA=1 /FIbar.h /Iinclude/Dir /UNDEBUG /u /X"
+#define CPP \
+	"-AI. -C -DA=1 -DB#2 -FIbar.h -FUbar.txt -Fx -Iinclude/Dir -UNDEBUG -u -X "
+#define OTHER \
+	"-EHsc -FAscu -FC -FRextended.sbr -Falist.txt -Fdfoo.pdb -Fefoo.exe -Fmmap.txt " \
+	"-Fpheader.pch -Frfoo.sbr -GA -GF -GH -GL -GR -GS -GT -GX -GZ -Ge -Gh -Gm -Gs666 " \
+	"-Gv -Gw -Gy -H42 -J -LDd -MDd -Ox -Qfast_transcendentals -Qpar -Qpar-report:2 " \
+	"-TC -TP -Tcfoo.c -Tpfoo.cpp -V1.0.0 -W3 -WL -WX -Wall -Wv:10.00.14393 -Ycheader.pch " \
+	"-Yd -Ylmain -Yuheader.pch -Y- -Z7 -ZW -Za -ZC:auto- -Zi -Zl -Zm200 -Zo- -Zp1 -Zs " \
+	"-arch:SSE2 -await -bigobj -clr:pure -constexpr:depth4 -docfile.xdc -errorReport:error.txt " \
+	"-execution-charset:utf-8 -favor:AMD64 -fp:fast -guard:cf- -homeparams -nologo -openmp " \
+	"-sdl -source-charset:latin1 -validate-charset- -vd2 -vmvoid -volatile:iso " \
+	"-w34693 -wd4593 -we4493 -wo4393 "
+
 	struct args *orig =
-		args_init_from_string("cl " CMDDASH " -c foo.c -Fofoo.obj");
-	struct args *exp_cpp = args_init_from_string("cl " CMDSLASH);
-#undef CMD
-	struct args *exp_cc = args_init_from_string("cl -c");
+		args_init_from_string("cl " CPP OTHER " -c foo.c -Fofoo.obj");
+	struct args *exp_cpp = args_init_from_string("cl " OTHER CPP);
+	struct args *exp_cc = args_init_from_string("cl " OTHER "-c");
+#undef CPP
+#undef OTHER
 	struct args *act_cpp = NULL, *act_cc = NULL;
 	create_file("foo.c", "");
 
