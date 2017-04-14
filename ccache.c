@@ -275,25 +275,25 @@ void set_compiler(const char* fullPath)
 	free(name);
 }
 
-inline bool
+static inline bool
 compiler_is_clang()
 {
 	return compiler == COMPILER_CLANG;
 }
 
-inline bool
+static inline bool
 compiler_is_gcc()
 {
 	return compiler == COMPILER_GCC;
 }
 
-inline bool
+static inline bool
 compiler_is_msvc()
 {
 	return compiler == COMPILER_MSVC;
 }
 
-inline bool
+static inline bool
 compiler_is_pump()
 {
 	return compiler == COMPILER_PUMP;
