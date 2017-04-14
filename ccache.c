@@ -269,7 +269,7 @@ void set_compiler(const char* fullPath)
 		cc_log("Detected PUMP compiler.");
 		compiler = COMPILER_PUMP;
 	} else {
-		cc_log("Unknown compiler '%s'... using GCC.");
+		cc_log("Unknown compiler '%s'... using GCC.", basename);
 		compiler = COMPILER_GCC;
 	}
 	free(name);
