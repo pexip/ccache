@@ -1,0 +1,88 @@
+#ifndef CCACHE_CONFIG_H
+#define CCACHE_CONFIG_H
+
+/* Define on Linux to activate all library features */
+#mesondefine _GNU_SOURCE
+
+const static char CCACHE_VERSION[] = @CCACHE_VERSION@;
+
+/* HEADERS */
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#mesondefine HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#mesondefine HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#mesondefine HAVE_PWD_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#mesondefine HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#mesondefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <locale.h> header file. */
+#mesondefine HAVE_LOCALE_H
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#mesondefine HAVE_STDARG_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#mesondefine HAVE_TERMIOS_H
+
+
+
+
+/* FUNCTIONS */
+
+/* Define to 1 if you have the `strtok_r' function. */
+#mesondefine HAVE_STRTOK_R
+
+/* Define to 1 if you have a C99 compliant `vsnprintf' function. */
+#mesondefine HAVE_VSNPRINTF
+
+/* Define to 1 if you have a C99 compliant `snprintf' function. */
+#mesondefine HAVE_SNPRINTF
+
+/* Define to 1 if you have the `vasprintf' function. */
+#mesondefine HAVE_VASPRINTF
+
+/* Define to 1 if you have the `asprintf' function. */
+#mesondefine HAVE_ASPRINTF
+
+/* Define to 1 if you have the `mkstemp' function. */
+#mesondefine HAVE_MKSTEMP
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#mesondefine HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the `gethostname' function. */
+#mesondefine HAVE_GETHOSTNAME
+
+/* Define to 1 if you have the `strndup' function. */
+#mesondefine HAVE_STRNDUP
+
+/* Define to 1 if you have the `unsetenv' function. */
+#mesondefine HAVE_UNSETENV
+
+/* Define to 1 if you have the `realpath' function. */
+#mesondefine HAVE_REALPATH
+
+/* Define to 1 if you have the `GetFinalPathNameByHandleW' function. */
+#mesondefine HAVE_GETFINALPATHNAMEBYHANDLEW
+
+/* Define to 1 if you have the `getpwuid' function. */
+#mesondefine HAVE_GETPWUID
+
+/* Define to 1 if you have the `utimes' function. */
+#mesondefine HAVE_UTIMES
+
+/* Define to 1 if you have the `getopt_long' function. */
+#mesondefine HAVE_GETOPT_LONG
+
+/* Define to 1 if you have the `localeconv' function. */
+#mesondefine HAVE_LOCALECONV
+
+#endif /* CCACHE_CONFIG_H */
